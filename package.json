@@ -1,0 +1,11 @@
+{
+  "name": "toukeagent",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node apps/platform/server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:contracts": "node --test tests/contracts.test.mjs",
+    "test:server": "node --test tests/server.test.mjs"
+  }
+}

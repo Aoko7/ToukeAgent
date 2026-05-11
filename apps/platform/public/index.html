@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ToukeAgent</title>
+    <style>
+      :root { color-scheme: dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+      body { margin: 0; background: #0f1115; color: #e5e7eb; }
+      main { max-width: 1100px; margin: 0 auto; padding: 24px; display: grid; gap: 16px; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .panel { border: 1px solid #263042; border-radius: 10px; padding: 16px; background: #151a22; }
+      label { display: grid; gap: 6px; margin-bottom: 12px; }
+      input, textarea, button, select {
+        font: inherit; color: inherit; background: #0f1420; border: 1px solid #2b3446; border-radius: 8px; padding: 10px 12px;
+      }
+      textarea { min-height: 120px; resize: vertical; }
+      button { cursor: pointer; }
+      pre { white-space: pre-wrap; word-break: break-word; margin: 0; min-height: 240px; }
+      .muted { color: #9ca3af; font-size: 12px; }
+      .events { display: grid; gap: 8px; }
+      .event { border: 1px solid #2b3446; border-radius: 8px; padding: 10px 12px; background: #0f1420; }
+      .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #243041; font-size: 12px; margin-right: 8px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="panel">
+        <h1>ToukeAgent</h1>
+        <p class="muted">Plan-to-Act + SSE + contract-first runtime</p>
+      </section>
+      <section class="row">
+        <div class="panel">
+          <h2>Send Message</h2>
+          <form id="message-form">
+            <label>
+              Workspace
+              <input name="workspace_id" value="ws_demo" />
+            </label>
+            <label>
+              Trace / Task
+              <input name="trace_id" value="trace_demo_1" />
+            </label>
+            <label>
+              Persona
+              <select name="persona_hint">
+                <option value="researcher">researcher</option>
+                <option value="reviewer">reviewer</option>
+                <option value="operator">operator</option>
+              </select>
+            </label>
+            <label>
+              Message
+              <textarea name="content">请给我一个最小可落地的开发计划。</textarea>
+            </label>
+            <button type="submit">Send</button>
+          </form>
+        </div>
+        <div class="panel">
+          <h2>Stream</h2>
+          <label>
+            Task ID
+            <input id="task-id" value="trace_demo_1" />
+          </label>
+          <button id="connect">Connect</button>
+          <button id="disconnect">Disconnect</button>
+          <div class="muted" id="stream-state">disconnected</div>
+          <pre id="stream-output"></pre>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Event Log</h2>
+        <div class="events" id="event-log"></div>
+      </section>
+    </main>
+    <script type="module" src="/app.mjs"></script>
+  </body>
+</html>
