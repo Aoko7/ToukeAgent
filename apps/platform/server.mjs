@@ -107,6 +107,8 @@ export function createPlatformServer() {
         service: 'toukeagent-platform',
         model_provider: deepseekClient.isConfigured ? 'deepseek' : 'local',
         model: deepseekClient.model,
+        model_config_source: deepseekClient.configSource,
+        model_config_path: deepseekClient.configPath,
       }, { headOnly: request.method === 'HEAD' });
       return;
     }

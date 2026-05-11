@@ -117,6 +117,7 @@
 
 ### 12) Security and Secrets
 - 密钥按 workspace、service、tool 作用域隔离，不允许在日志和模型上下文中明文泄漏。
+- 模型密钥优先放入本地 `config/model-config.local.json`，再按需回退到环境变量；仓库仅提交 example 文件。
 - 高风险工具执行应运行在受限环境中，并保留审计记录。
 - 输入输出在进入模型和日志前应做脱敏与策略检查。
 

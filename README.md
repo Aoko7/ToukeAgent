@@ -7,19 +7,17 @@ npm test
 npm run dev
 ```
 
-## DeepSeek
+## Model Keys
 
-Set these environment variables before starting the server:
-
-- `DEEPSEEK_API_KEY`
-- `DEEPSEEK_BASE_URL` (default: `https://api.deepseek.com`)
-- `DEEPSEEK_MODEL` (default: `deepseek-v4-flash`)
-
-You can start from:
+Use a dedicated local config file for model keys:
 
 ```bash
-cp .env.example .env
+cp config/model-config.example.json config/model-config.local.json
 ```
+
+Fill in `config/model-config.local.json`, especially `deepseek.apiKey`.
+
+The app reads the local config first and falls back to environment variables for compatibility.
 
 ## Workflow
 
