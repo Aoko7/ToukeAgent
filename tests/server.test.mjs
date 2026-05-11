@@ -30,6 +30,7 @@ test('server pipeline builds plan, run state, and stores stream events', async (
   assert.equal(result.run_state.status, 'completed');
   assert.match(result.task_url, /\/api\/tasks\?task_id=/);
   assert.match(result.memory_url, /\/api\/memory\?task_id=/);
+  assert.match(result.wiki_url, /\/api\/wiki/);
   assert.equal(replay[0].event_type, 'start');
   assert.equal(replay.at(-1).event_type, 'done');
   assert.equal(replay[2].event_type, 'delta');

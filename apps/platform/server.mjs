@@ -15,6 +15,7 @@ import { createAsyncWorker } from './src/async-worker.mjs';
 import { createAuditStore } from './src/audit-store.mjs';
 import { createTaskStore } from './src/task-store.mjs';
 import { createMemoryStore } from './src/memory-store.mjs';
+import { createWikiStore } from './src/wiki-store.mjs';
 
 const PUBLIC_DIR = resolve(fileURLToPath(new URL('./public/', import.meta.url)));
 const streamStore = createStreamStore();
@@ -28,7 +29,8 @@ const deepseekClient = createDeepSeekClient();
 const responseComposer = createResponseComposer({ client: deepseekClient });
 const eventBus = createEventBus();
 const worker = createAsyncWorker({ bus: eventBus });
-registerDefaultTools(toolRegistry);
+const wikiStore = createWikiStore();
+registerDefaultTools(toolRegistry, { wikiStore });
 
 worker.register('tool.invoke', async ({ request }) => toolRegistry.invoke(request));
 worker.register('response.compose', async ({ persona, message, plan, retrievalResult, memorySnapshot }) => ({
@@ -325,6 +327,7 @@ export async function processInboundMessage(input, store = streamStore) {
     audit_url: `/api/traces?task_id=${encodeURIComponent(message.trace_id)}`,
     task_url: `/api/tasks?task_id=${encodeURIComponent(message.trace_id)}`,
     memory_url: `/api/memory?task_id=${encodeURIComponent(message.trace_id)}`,
+    wiki_url: '/api/wiki',
     events,
   };
 }
@@ -415,6 +418,109 @@ export function createPlatformServer() {
           query,
           items: memoryStore.searchLongTerm(query, { limit: 6 }),
         }, { headOnly: request.method === 'HEAD' });
+      return;
+    }
+
+    if (request.method === 'GET' && url.pathname === '/api/wiki') {
+      const entryId = url.searchParams.get('entry_id');
+      const query = url.searchParams.get('q');
+
+      if (entryId) {
+        sendJson(response, 200, { entry: wikiStore.get(entryId) });
+        return;
+      }
+
+      if (query) {
+        sendJson(response, 200, { query, items: wikiStore.query({ query, limit: 6 }) });
+        return;
+      }
+
+      sendJson(response, 200, { entries: wikiStore.list() });
+      return;
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/wiki') {
+      try {
+        const input = await readJsonBody(request);
+        const entry = wikiStore.upsert(input);
+        auditStore.append(entry.entry_id, {
+          trace_id: input.source_trace_id ?? input.entry_id ?? entry.entry_id,
+          kind: 'wiki.upsert',
+          payload: entry,
+        });
+        sendJson(response, 200, { entry });
+      } catch (error) {
+        sendJson(response, 400, { error: error instanceof Error ? error.message : 'Bad Request' });
+      }
+      return;
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/wiki/expire') {
+      try {
+        const input = await readJsonBody(request);
+        if (!input.entry_id) {
+          sendJson(response, 400, { error: 'entry_id is required' });
+          return;
+        }
+        const entry = wikiStore.expire(input.entry_id, {
+          reason: input.reason,
+          metadata: input.metadata,
+        });
+        auditStore.append(entry.entry_id, {
+          trace_id: input.source_trace_id ?? input.entry_id,
+          kind: 'wiki.expire',
+          payload: entry,
+        });
+        sendJson(response, 200, { entry });
+      } catch (error) {
+        sendJson(response, 400, { error: error instanceof Error ? error.message : 'Bad Request' });
+      }
+      return;
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/wiki/archive') {
+      try {
+        const input = await readJsonBody(request);
+        if (!input.entry_id) {
+          sendJson(response, 400, { error: 'entry_id is required' });
+          return;
+        }
+        const entry = wikiStore.archive(input.entry_id, {
+          reason: input.reason,
+          metadata: input.metadata,
+        });
+        auditStore.append(entry.entry_id, {
+          trace_id: input.source_trace_id ?? input.entry_id,
+          kind: 'wiki.archive',
+          payload: entry,
+        });
+        sendJson(response, 200, { entry });
+      } catch (error) {
+        sendJson(response, 400, { error: error instanceof Error ? error.message : 'Bad Request' });
+      }
+      return;
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/wiki/delete') {
+      try {
+        const input = await readJsonBody(request);
+        if (!input.entry_id) {
+          sendJson(response, 400, { error: 'entry_id is required' });
+          return;
+        }
+        const entry = wikiStore.softDelete(input.entry_id, {
+          reason: input.reason,
+          metadata: input.metadata,
+        });
+        auditStore.append(entry.entry_id, {
+          trace_id: input.source_trace_id ?? input.entry_id,
+          kind: 'wiki.delete',
+          payload: entry,
+        });
+        sendJson(response, 200, { entry });
+      } catch (error) {
+        sendJson(response, 400, { error: error instanceof Error ? error.message : 'Bad Request' });
+      }
       return;
     }
 

@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 const DEFAULT_WIKI_ENTRIES = [
   {
     entry_id: 'wiki_deepseek_provider',
@@ -8,7 +10,6 @@ const DEFAULT_WIKI_ENTRIES = [
       'Prefer the wiki path when the request asks for versions, pricing, or current provider status.',
     ],
     tags: ['deepseek', 'provider', 'pricing', 'version', 'status'],
-    updated_at: '2026-05-11T00:00:00.000Z',
   },
   {
     entry_id: 'wiki_delivery_workflow',
@@ -19,7 +20,6 @@ const DEFAULT_WIKI_ENTRIES = [
       'Audit traces preserve the end-to-end evidence chain.',
     ],
     tags: ['workflow', 'status', 'task', 'audit', 'operations'],
-    updated_at: '2026-05-11T00:00:00.000Z',
   },
   {
     entry_id: 'wiki_persona_operations',
@@ -30,12 +30,24 @@ const DEFAULT_WIKI_ENTRIES = [
       'Persona changes alter behavior strategy, not compliance boundaries.',
     ],
     tags: ['persona', 'role', 'operations', 'runtime'],
-    updated_at: '2026-05-11T00:00:00.000Z',
   },
 ];
 
+function clone(value) {
+  return structuredClone(value);
+}
+
+function normalizeText(value) {
+  return String(value ?? '').replace(/\s+/g, ' ').trim();
+}
+
+function summarizeText(text, limit = 120) {
+  const normalized = normalizeText(text);
+  return normalized.length > limit ? `${normalized.slice(0, limit - 3)}...` : normalized;
+}
+
 function scoreEntry(query, entry) {
-  const lowered = query.toLowerCase();
+  const lowered = normalizeText(query).toLowerCase();
   const haystack = [
     entry.title,
     entry.summary,
@@ -58,30 +70,195 @@ function scoreEntry(query, entry) {
   return score;
 }
 
-export function createWikiStore(entries = DEFAULT_WIKI_ENTRIES) {
+function normalizeEntry(input, existing = null) {
+  const now = new Date().toISOString();
   return {
-    list() {
-      return entries.slice();
-    },
-    query({ query, limit = 2 }) {
-      const ranked = entries
-        .map((entry) => ({
-          ...entry,
-          score: scoreEntry(query, entry),
-        }))
-        .filter((entry) => entry.score > 0)
-        .sort((left, right) => right.score - left.score)
-        .slice(0, limit);
+    entry_id: input.entry_id ?? existing?.entry_id ?? `wiki_${randomUUID()}`,
+    title: input.title ?? existing?.title ?? 'Untitled entry',
+    summary: input.summary ?? existing?.summary ?? '',
+    facts: clone(input.facts ?? existing?.facts ?? []),
+    tags: clone(input.tags ?? existing?.tags ?? []),
+    status: input.status ?? existing?.status ?? 'active',
+    version: Number.isFinite(input.version) ? input.version : (existing?.version ?? 0) + 1,
+    source: input.source ?? existing?.source ?? 'manual',
+    source_task_id: input.source_task_id ?? existing?.source_task_id ?? null,
+    source_trace_id: input.source_trace_id ?? existing?.source_trace_id ?? null,
+    created_at: existing?.created_at ?? input.created_at ?? now,
+    updated_at: input.updated_at ?? now,
+    expires_at: input.expires_at ?? existing?.expires_at ?? null,
+    archived_at: input.archived_at ?? existing?.archived_at ?? null,
+    deleted_at: input.deleted_at ?? existing?.deleted_at ?? null,
+    deleted: input.deleted ?? existing?.deleted ?? false,
+    metadata: clone(input.metadata ?? existing?.metadata ?? {}),
+  };
+}
 
-      return ranked.map((entry, index) => ({
-        entry_id: entry.entry_id,
-        title: entry.title,
-        snippet: entry.summary,
-        score: Math.max(0.75, 0.95 - index * 0.08),
-        source_type: 'wiki',
-        freshness: 'dynamic',
-        updated_at: entry.updated_at,
-      }));
-    },
+export function createWikiStore(entries = DEFAULT_WIKI_ENTRIES) {
+  const records = new Map();
+  const history = new Map();
+
+  function pushHistory(entryId, snapshot) {
+    if (!history.has(entryId)) {
+      history.set(entryId, []);
+    }
+    history.get(entryId).push(clone(snapshot));
+  }
+
+  function upsert(input) {
+    const existing = input.entry_id ? records.get(input.entry_id) : null;
+    const entry = normalizeEntry(input, existing);
+    if (existing) {
+      pushHistory(existing.entry_id, existing);
+    }
+    records.set(entry.entry_id, entry);
+    return clone(entry);
+  }
+
+  function expire(entryId, { reason = 'expired', metadata = {} } = {}) {
+    const existing = records.get(entryId);
+    if (!existing) {
+      throw new Error(`Unknown wiki entry: ${entryId}`);
+    }
+
+    pushHistory(existing.entry_id, existing);
+    const now = new Date().toISOString();
+    const entry = {
+      ...existing,
+      status: 'expired',
+      deleted: false,
+      expires_at: now,
+      updated_at: now,
+      metadata: {
+        ...existing.metadata,
+        ...clone(metadata),
+        expire_reason: reason,
+      },
+    };
+
+    records.set(entryId, entry);
+    return clone(entry);
+  }
+
+  function archive(entryId, { reason = 'archived', metadata = {} } = {}) {
+    const existing = records.get(entryId);
+    if (!existing) {
+      throw new Error(`Unknown wiki entry: ${entryId}`);
+    }
+
+    pushHistory(existing.entry_id, existing);
+    const now = new Date().toISOString();
+    const entry = {
+      ...existing,
+      status: 'archived',
+      deleted: false,
+      archived_at: now,
+      updated_at: now,
+      metadata: {
+        ...existing.metadata,
+        ...clone(metadata),
+        archive_reason: reason,
+      },
+    };
+
+    records.set(entryId, entry);
+    return clone(entry);
+  }
+
+  function softDelete(entryId, { reason = 'deleted', metadata = {} } = {}) {
+    const existing = records.get(entryId);
+    if (!existing) {
+      throw new Error(`Unknown wiki entry: ${entryId}`);
+    }
+
+    pushHistory(existing.entry_id, existing);
+    const now = new Date().toISOString();
+    const entry = {
+      ...existing,
+      status: 'deleted',
+      deleted: true,
+      deleted_at: now,
+      updated_at: now,
+      metadata: {
+        ...existing.metadata,
+        ...clone(metadata),
+        delete_reason: reason,
+      },
+    };
+
+    records.set(entryId, entry);
+    return clone(entry);
+  }
+
+  function get(entryId) {
+    const entry = records.get(entryId);
+    return entry ? clone(entry) : null;
+  }
+
+  function list({ includeExpired = false, includeArchived = false, includeDeleted = false } = {}) {
+    return Array.from(records.values())
+      .filter((entry) => {
+        if (entry.status === 'expired' && !includeExpired) {
+          return false;
+        }
+        if (entry.status === 'archived' && !includeArchived) {
+          return false;
+        }
+        if (entry.status === 'deleted' && !includeDeleted) {
+          return false;
+        }
+        return true;
+      })
+      .map((entry) => clone(entry));
+  }
+
+  function getHistory(entryId) {
+    return clone(history.get(entryId) ?? []);
+  }
+
+  function query({ query, limit = 2, includeExpired = false, includeArchived = false, includeDeleted = false }) {
+    const ranked = list({ includeExpired, includeArchived, includeDeleted })
+      .map((entry) => ({
+        ...entry,
+        score: scoreEntry(query, entry),
+      }))
+      .filter((entry) => entry.score > 0)
+      .sort((left, right) => right.score - left.score)
+      .slice(0, limit);
+
+    return ranked.map((entry, index) => ({
+      entry_id: entry.entry_id,
+      title: entry.title,
+      snippet: entry.summary,
+      score: Math.max(0.75, 0.95 - index * 0.08),
+      source_type: 'wiki',
+      freshness: entry.status === 'expired' ? 'historical' : 'dynamic',
+      status: entry.status,
+      updated_at: entry.updated_at,
+      version: entry.version,
+    }));
+  }
+
+  function ensureSeed() {
+    for (const seed of entries) {
+      upsert({
+        ...seed,
+        version: 1,
+        status: 'active',
+        source: 'seed',
+      });
+    }
+  }
+
+  ensureSeed();
+
+  return {
+    upsert,
+    expire,
+    archive,
+    softDelete,
+    get,
+    list,
+    query,
+    getHistory,
   };
 }

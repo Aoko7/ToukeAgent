@@ -21,8 +21,8 @@
 ## Phase 2: Knowledge and Retrieval
 15. 接入短期记忆与长期记忆接口。
 16. 实现 hybrid RAG 路由、检索、重排与引用输出。
-17. 实现 LLM wiki 的写入、更新、过期与查询接口。
-18. 定义知识条目的 TTL、版本、软删除和归档策略。
+17. 实现 LLM wiki 的写入、更新、过期与查询接口。（已完成）
+18. 定义知识条目的 TTL、版本、软删除和归档策略。（已完成）
 
 ## Phase 3: Governance and Safety
 19. 实现模型输出质量评测管线与评分维度。

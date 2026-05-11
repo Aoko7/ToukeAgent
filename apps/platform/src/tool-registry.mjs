@@ -40,8 +40,7 @@ export function createToolRegistry() {
   return { register, resolve, invoke, list };
 }
 
-export function registerDefaultTools(registry) {
-  const wikiStore = createWikiStore();
+export function registerDefaultTools(registry, { wikiStore = createWikiStore() } = {}) {
   const searchStableDocs = ({ query, personaId }) => {
     const normalizedQuery = String(query ?? '').toLowerCase();
     return [
