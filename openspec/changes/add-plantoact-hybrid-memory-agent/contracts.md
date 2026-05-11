@@ -300,7 +300,66 @@
 | `streaming_enabled` | boolean | 是否允许流式输出 |
 | `status` | string | `active` / `paused` |
 
-## 6. 开发约定
+## 6. AgentPlan
+
+### 用途
+描述一次任务的规划结果、步骤顺序和执行目标。
+
+### 建议字段
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `plan_id` | string | 计划 ID |
+| `task_id` | string | 任务 ID |
+| `trace_id` | string | 追踪 ID |
+| `persona_id` | string | 当前人格 |
+| `goal` | string | 计划目标 |
+| `summary` | string | 计划摘要 |
+| `steps` | array | 步骤数组 |
+| `metadata` | object | 扩展字段 |
+
+### 步骤建议字段
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `step_id` | string | 步骤 ID |
+| `title` | string | 步骤标题 |
+| `objective` | string | 步骤目标 |
+| `kind` | string | `reason` / `tool` / `respond` |
+| `status` | string | `pending` / `running` / `completed` / `failed` / `cancelled` |
+| `tool_name` | string | 关联工具，可为空 |
+| `acceptance` | array | 步骤完成标准 |
+| `metadata` | object | 扩展字段 |
+
+## 7. AgentRunState
+
+### 用途
+描述一个任务执行过程中的实时状态、阶段结果和最终输出。
+
+### 建议字段
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `run_id` | string | 运行 ID |
+| `task_id` | string | 任务 ID |
+| `trace_id` | string | 追踪 ID |
+| `persona_id` | string | 当前人格 |
+| `plan_id` | string | 所属计划，可为空 |
+| `status` | string | `queued` / `planning` / `running` / `completed` / `failed` / `cancelled` |
+| `current_step_id` | string | 当前步骤，可为空 |
+| `completed_steps` | number | 已完成步骤数 |
+| `total_steps` | number | 总步骤数 |
+| `step_results` | array | 步骤结果 |
+| `output` | object | 最终输出 |
+| `metadata` | object | 扩展字段 |
+
+### 步骤结果建议字段
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `step_id` | string | 步骤 ID |
+| `status` | string | 步骤状态 |
+| `summary` | string | 结果摘要 |
+| `output` | object | 步骤输出 |
+| `error` | object | 错误信息 |
+
+## 8. 开发约定
 
 ### 前端
 - 只依赖 `CanonicalMessage` 和 `StreamEvent`

@@ -43,6 +43,8 @@
 3. `ToolInvocationContract`：工具注册与执行契约
 4. `PersonaProfile`：人格和角色配置
 5. `RouteBinding`：渠道、人格和 agent 绑定关系
+6. `AgentPlan`：任务规划对象
+7. `AgentRunState`：运行时状态对象
 
 字段定义见 `contracts.md`。
 

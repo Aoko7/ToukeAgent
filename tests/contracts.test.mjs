@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  createAgentPlan,
+  createAgentRunState,
   createCanonicalMessage,
   createStreamEvent,
   createToolDefinition,
@@ -89,4 +91,32 @@ test('persona and route binding normalize defaults', () => {
   assert.equal(persona.style.tone, 'neutral');
   assert.equal(binding.status, 'active');
   assert.equal(binding.streaming_enabled, true);
+});
+
+test('agent plan and run state normalize defaults', () => {
+  const plan = createAgentPlan({
+    plan_id: 'plan_1',
+    task_id: 'task_1',
+    trace_id: 'trace_1',
+    persona_id: 'researcher',
+    goal: 'Build a plan',
+    steps: [
+      {
+        step_id: 'step_1',
+        title: 'Understand request',
+      },
+    ],
+  });
+
+  const runState = createAgentRunState({
+    run_id: 'run_1',
+    task_id: 'task_1',
+    trace_id: 'trace_1',
+    persona_id: 'researcher',
+    total_steps: 1,
+  });
+
+  assert.equal(plan.steps[0].status, 'pending');
+  assert.equal(runState.status, 'queued');
+  assert.equal(runState.total_steps, 1);
 });

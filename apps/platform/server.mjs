@@ -4,9 +4,17 @@ import { extname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createCanonicalMessage, createStreamEvent } from '../../packages/contracts/src/index.mjs';
 import { createStreamStore } from './src/stream-store.mjs';
+import { createPersonaRegistry } from './src/persona-registry.mjs';
+import { createPlanner } from './src/planner.mjs';
+import { runAgentTask } from './src/runtime.mjs';
+import { createToolRegistry, registerDefaultTools } from './src/tool-registry.mjs';
 
 const PUBLIC_DIR = resolve(fileURLToPath(new URL('./public/', import.meta.url)));
 const streamStore = createStreamStore();
+const personaRegistry = createPersonaRegistry();
+const planner = createPlanner();
+const toolRegistry = createToolRegistry();
+registerDefaultTools(toolRegistry);
 
 function contentType(pathname) {
   switch (extname(pathname)) {
@@ -61,60 +69,25 @@ function serveFile(response, filePath, { headOnly = false } = {}) {
     });
 }
 
-export function buildDemoEvents(message) {
-  const taskId = message.trace_id;
-  const personaId = message.persona_hint ?? 'researcher';
-  const text = message.content.find((part) => part.type === 'text')?.text ?? 'message';
-  const base = {
-    trace_id: message.trace_id,
-    task_id: taskId,
-    run_id: taskId,
-    persona_id: personaId,
-  };
-
-  return [
-    createStreamEvent({
-      ...base,
-      event_type: 'start',
-      payload: { title: 'Processing request', mode: 'assistant' },
-    }),
-    createStreamEvent({
-      ...base,
-      event_type: 'status',
-      payload: { state: 'planning', message: 'Building plan' },
-    }),
-    createStreamEvent({
-      ...base,
-      event_type: 'tool_call',
-      payload: { tool_name: 'search_docs', call_id: `call_${message.message_id}`, summary: 'Demo retrieval' },
-    }),
-    createStreamEvent({
-      ...base,
-      event_type: 'tool_result',
-      payload: { call_id: `call_${message.message_id}`, status: 'success', summary: 'Demo retrieval complete' },
-    }),
-    createStreamEvent({
-      ...base,
-      event_type: 'delta',
-      payload: { text: `Planned next step for: ${text}` },
-    }),
-    createStreamEvent({
-      ...base,
-      event_type: 'done',
-      payload: { final_message_id: `out_${message.message_id}`, finish_reason: 'completed' },
-      is_terminal: true,
-    }),
-  ];
-}
-
-export function processInboundMessage(input, store = streamStore) {
+export async function processInboundMessage(input, store = streamStore) {
   const message = createCanonicalMessage(input);
-  const taskId = message.trace_id;
-  const events = buildDemoEvents(message).map((event) => store.append(taskId, event));
+  const persona = personaRegistry.get(message.persona_hint);
+  const plan = planner.createPlan({ message, persona });
+  const { runState, events } = await runAgentTask({
+    message,
+    persona,
+    plan,
+    toolRegistry,
+    store,
+  });
+
   return {
     message,
-    task_id: taskId,
-    stream_url: `/api/stream?task_id=${encodeURIComponent(taskId)}`,
+    persona,
+    plan,
+    run_state: runState,
+    task_id: message.trace_id,
+    stream_url: `/api/stream?task_id=${encodeURIComponent(message.trace_id)}`,
     events,
   };
 }
@@ -171,7 +144,7 @@ export function createPlatformServer() {
     if (request.method === 'POST' && url.pathname === '/api/messages') {
       try {
         const input = await readJsonBody(request);
-        sendJson(response, 200, processInboundMessage(input, streamStore));
+        sendJson(response, 200, await processInboundMessage(input, streamStore));
       } catch (error) {
         sendJson(response, 400, { error: error instanceof Error ? error.message : 'Bad Request' });
       }
