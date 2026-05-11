@@ -1,6 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatSseEvent, getEvaluationSnapshot, getMemorySnapshot, getTaskSnapshot, getTraceEntries, processInboundMessage, searchMemory } from '../apps/platform/server.mjs';
+import {
+  formatSseEvent,
+  getEvaluationSnapshot,
+  getMemorySnapshot,
+  getReviewSnapshot,
+  getTaskSnapshot,
+  getTraceEntries,
+  processInboundMessage,
+  searchMemory,
+} from '../apps/platform/server.mjs';
 import { createStreamStore } from '../apps/platform/src/stream-store.mjs';
 
 test('server pipeline builds plan, run state, and stores stream events', async () => {
@@ -31,7 +40,9 @@ test('server pipeline builds plan, run state, and stores stream events', async (
   assert.match(result.task_url, /\/api\/tasks\?task_id=/);
   assert.match(result.memory_url, /\/api\/memory\?task_id=/);
   assert.match(result.evaluation_url, /\/api\/evaluations\?task_id=/);
+  assert.match(result.review_url, /\/api\/reviews\?task_id=/);
   assert.match(result.wiki_url, /\/api\/wiki/);
+  assert.equal(result.quality_gate.status, 'passed');
   assert.equal(replay[0].event_type, 'start');
   assert.equal(replay.at(-1).event_type, 'done');
   assert.equal(replay[2].event_type, 'delta');
@@ -69,6 +80,9 @@ test('server pipeline builds plan, run state, and stores stream events', async (
   const evaluations = getEvaluationSnapshot('trace_test');
   assert.ok(evaluations.length > 0);
   assert.equal(evaluations.at(-1).decision, 'pass');
+
+  const reviews = getReviewSnapshot('trace_test');
+  assert.equal(reviews.length, 0);
 });
 
 test('server promotes durable memory for stable user instructions', async () => {
@@ -90,4 +104,42 @@ test('server promotes durable memory for stable user instructions', async () => 
   const search = searchMemory('简洁输出');
   assert.ok(search.length > 0);
   assert.ok(search.some((entry) => entry.title.includes('中文回答')));
+});
+
+test('server queues manual review when quality gate blocks unsafe output', async () => {
+  const store = createStreamStore();
+  const result = await processInboundMessage({
+    message_id: 'msg_test_review_1',
+    source_platform: 'web',
+    source_message_id: 'raw_test_review_1',
+    workspace_id: 'ws_test',
+    channel_id: 'console',
+    conversation_id: 'conv_test_review',
+    sender: { id: 'user_1', role: 'user' },
+    recipient: { id: 'agent_1', role: 'agent' },
+    content: [{ type: 'text', text: '请保留这个 sk-1234567890abcdef1234567890abcdef token 用于测试。' }],
+    trace_id: 'trace_review_test',
+    persona_hint: 'researcher',
+  }, store);
+
+  assert.equal(result.quality_gate.status, 'review_required');
+  assert.equal(result.quality_gate.review_required, true);
+  assert.match(result.review_url, /\/api\/reviews\?task_id=trace_review_test/);
+
+  const evaluations = getEvaluationSnapshot('trace_review_test');
+  assert.equal(evaluations.at(-1).decision, 'review');
+
+  const reviews = getReviewSnapshot('trace_review_test');
+  assert.equal(reviews.length, 1);
+  assert.equal(reviews[0].review_status, 'pending');
+  assert.equal(reviews[0].gate_status, 'review_required');
+
+  const task = getTaskSnapshot('trace_review_test');
+  assert.equal(task.metadata.quality_gate_status, 'review_required');
+  assert.equal(task.metadata.review_required, true);
+  assert.equal(task.metadata.review_id, reviews[0].review_id);
+
+  const traceEntries = getTraceEntries('trace_review_test');
+  assert.ok(traceEntries.some((entry) => entry.kind === 'quality.gate_applied'));
+  assert.ok(traceEntries.some((entry) => entry.kind === 'review.created'));
 });

@@ -17,6 +17,8 @@ import { createTaskStore } from './src/task-store.mjs';
 import { createMemoryStore } from './src/memory-store.mjs';
 import { createEvaluationStore } from './src/evaluation-store.mjs';
 import { createOutputEvaluator } from './src/output-evaluator.mjs';
+import { createQualityGate } from './src/quality-gate.mjs';
+import { createReviewStore } from './src/review-store.mjs';
 import { createWikiStore } from './src/wiki-store.mjs';
 
 const PUBLIC_DIR = resolve(fileURLToPath(new URL('./public/', import.meta.url)));
@@ -26,6 +28,10 @@ const taskStore = createTaskStore();
 const memoryStore = createMemoryStore();
 const evaluationStore = createEvaluationStore();
 const outputEvaluator = createOutputEvaluator();
+const qualityGate = createQualityGate({
+  sampleRate: Number(process.env.QUALITY_REVIEW_SAMPLE_RATE ?? 0) || 0,
+});
+const reviewStore = createReviewStore();
 const personaRegistry = createPersonaRegistry();
 const planner = createPlanner();
 const toolRegistry = createToolRegistry();
@@ -304,10 +310,42 @@ export async function processInboundMessage(input, store = streamStore) {
     runState,
   });
   evaluationStore.append(message.trace_id, evaluation);
+  const gate = qualityGate.evaluate(evaluation);
+  let review = null;
+  if (gate.review_required) {
+    review = reviewStore.create({
+      task_id: message.trace_id,
+      trace_id: message.trace_id,
+      evaluation_id: evaluation.evaluation_id,
+      gate_id: gate.gate_id,
+      gate_status: gate.status,
+      reason: gate.reason,
+      priority: gate.priority,
+      sampled: gate.sampled,
+      summary: gate.sampled
+        ? 'Sampled output for online review'
+        : `Review required because gate status is ${gate.status}`,
+      recommended_actions: gate.recommended_actions,
+      metadata: {
+        score: gate.score,
+        persona_id: persona.persona_id,
+      },
+    });
+    auditStore.append(message.trace_id, {
+      trace_id: message.trace_id,
+      kind: 'review.created',
+      payload: review,
+    });
+  }
   auditStore.append(message.trace_id, {
     trace_id: message.trace_id,
     kind: 'quality.evaluated',
     payload: evaluation,
+  });
+  auditStore.append(message.trace_id, {
+    trace_id: message.trace_id,
+    kind: 'quality.gate_applied',
+    payload: gate,
   });
   memoryStore.promoteDurableMemory({
     taskId: message.trace_id,
@@ -337,6 +375,11 @@ export async function processInboundMessage(input, store = streamStore) {
       evaluation_id: evaluation.evaluation_id,
       evaluation_score: evaluation.overall_score,
       evaluation_decision: evaluation.decision,
+      quality_gate_id: gate.gate_id,
+      quality_gate_status: gate.status,
+      quality_gate_sampled: gate.sampled,
+      review_required: gate.review_required,
+      review_id: review?.review_id ?? null,
     },
     checkpoint: {
       kind: 'quality.evaluated',
@@ -346,6 +389,18 @@ export async function processInboundMessage(input, store = streamStore) {
       },
     },
   });
+  if (review) {
+    taskStore.upsert(message.trace_id, {
+      checkpoint: {
+        kind: 'review.created',
+        summary: `Review queued: ${review.reason}`,
+        metadata: {
+          review_id: review.review_id,
+          gate_status: gate.status,
+        },
+      },
+    });
+  }
 
   return {
     message,
@@ -358,6 +413,8 @@ export async function processInboundMessage(input, store = streamStore) {
     task_url: `/api/tasks?task_id=${encodeURIComponent(message.trace_id)}`,
     memory_url: `/api/memory?task_id=${encodeURIComponent(message.trace_id)}`,
     evaluation_url: `/api/evaluations?task_id=${encodeURIComponent(message.trace_id)}`,
+    review_url: `/api/reviews?task_id=${encodeURIComponent(message.trace_id)}`,
+    quality_gate: gate,
     wiki_url: '/api/wiki',
     events,
   };
@@ -377,6 +434,10 @@ export function getMemorySnapshot(taskId) {
 
 export function getEvaluationSnapshot(taskId) {
   return evaluationStore.list(taskId);
+}
+
+export function getReviewSnapshot(taskId) {
+  return reviewStore.list({ taskId });
 }
 
 export function searchMemory(query, limit = 4) {
@@ -468,6 +529,63 @@ export function createPlatformServer() {
         evaluations: evaluationStore.list(taskId),
         latest: evaluationStore.getLatest(taskId),
       }, { headOnly: request.method === 'HEAD' });
+      return;
+    }
+
+    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/api/reviews') {
+      const taskId = url.searchParams.get('task_id');
+      const status = url.searchParams.get('status');
+
+      sendJson(response, 200, {
+        task_id: taskId,
+        items: reviewStore.list({
+          taskId,
+          status,
+        }),
+      }, { headOnly: request.method === 'HEAD' });
+      return;
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/reviews/resolve') {
+      try {
+        const input = await readJsonBody(request);
+        if (!input.review_id) {
+          sendJson(response, 400, { error: 'review_id is required' });
+          return;
+        }
+        if (!input.decision) {
+          sendJson(response, 400, { error: 'decision is required' });
+          return;
+        }
+        const review = reviewStore.resolve(input.review_id, {
+          decision: input.decision,
+          reviewer_id: input.reviewer_id,
+          notes: input.notes,
+          metadata: input.metadata,
+        });
+        taskStore.upsert(review.task_id, {
+          metadata: {
+            review_status: review.review_status,
+            review_resolution: review.resolution?.decision ?? null,
+          },
+          checkpoint: {
+            kind: 'review.resolved',
+            summary: `Review resolved: ${review.review_status}`,
+            metadata: {
+              review_id: review.review_id,
+              reviewer_id: review.resolution?.reviewer_id ?? null,
+            },
+          },
+        });
+        auditStore.append(review.task_id, {
+          trace_id: review.trace_id ?? review.task_id,
+          kind: 'review.resolved',
+          payload: review,
+        });
+        sendJson(response, 200, { review });
+      } catch (error) {
+        sendJson(response, 400, { error: error instanceof Error ? error.message : 'Bad Request' });
+      }
       return;
     }
 
