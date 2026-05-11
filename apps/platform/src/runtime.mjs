@@ -54,7 +54,7 @@ function attachWorkerStatusBridge({ eventBus, append, taskId, runId }) {
   };
 }
 
-export async function runAgentTask({ message, persona, plan, toolRegistry, store, responseComposer, worker = null, eventBus = null, onTaskUpdate = null }) {
+export async function runAgentTask({ message, persona, plan, toolRegistry, store, responseComposer, worker = null, eventBus = null, memoryStore = null, onTaskUpdate = null }) {
   const runState = createAgentRunState({
     run_id: `run_${message.trace_id}`,
     task_id: message.trace_id,
@@ -190,6 +190,12 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
           tool_name: step.tool_name,
         });
       } else if (step.kind === 'respond') {
+        const memorySnapshot = memoryStore?.buildContext({
+          taskId: runState.task_id,
+          query: message.content.find((part) => part.type === 'text')?.text ?? plan.goal,
+          limit: 4,
+        }) ?? null;
+
         const finalText = worker
           ? (await worker.dispatch({
             job_type: 'response.compose',
@@ -199,9 +205,9 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
             step_id: step.step_id,
             persona_id: persona.persona_id,
             metadata: { persona_name: persona.name },
-            payload: { persona, message, plan, retrievalResult },
+            payload: { persona, message, plan, retrievalResult, memorySnapshot },
           })).content
-          : await responseComposer.compose({ persona, message, plan, retrievalResult });
+          : await responseComposer.compose({ persona, message, plan, retrievalResult, memorySnapshot });
         append({
           event_type: 'delta',
           step_id: step.step_id,

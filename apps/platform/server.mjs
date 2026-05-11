@@ -14,11 +14,13 @@ import { createEventBus } from './src/event-bus.mjs';
 import { createAsyncWorker } from './src/async-worker.mjs';
 import { createAuditStore } from './src/audit-store.mjs';
 import { createTaskStore } from './src/task-store.mjs';
+import { createMemoryStore } from './src/memory-store.mjs';
 
 const PUBLIC_DIR = resolve(fileURLToPath(new URL('./public/', import.meta.url)));
 const streamStore = createStreamStore();
 const auditStore = createAuditStore();
 const taskStore = createTaskStore();
+const memoryStore = createMemoryStore();
 const personaRegistry = createPersonaRegistry();
 const planner = createPlanner();
 const toolRegistry = createToolRegistry();
@@ -29,8 +31,8 @@ const worker = createAsyncWorker({ bus: eventBus });
 registerDefaultTools(toolRegistry);
 
 worker.register('tool.invoke', async ({ request }) => toolRegistry.invoke(request));
-worker.register('response.compose', async ({ persona, message, plan, retrievalResult }) => ({
-  content: await responseComposer.compose({ persona, message, plan, retrievalResult }),
+worker.register('response.compose', async ({ persona, message, plan, retrievalResult, memorySnapshot }) => ({
+  content: await responseComposer.compose({ persona, message, plan, retrievalResult, memorySnapshot }),
   summary: 'Response composed',
 }));
 
@@ -100,6 +102,7 @@ function serveFile(response, filePath, { headOnly = false } = {}) {
 export async function processInboundMessage(input, store = streamStore) {
   const message = createCanonicalMessage(input);
   const persona = personaRegistry.get(message.persona_hint);
+  const userText = message.content.find((part) => part.type === 'text')?.text ?? '';
   const taskSummary = {
     message_id: message.message_id,
     source_platform: message.source_platform,
@@ -109,6 +112,23 @@ export async function processInboundMessage(input, store = streamStore) {
     persona_hint: message.persona_hint,
     content_preview: message.content.find((part) => part.type === 'text')?.text ?? '',
   };
+  memoryStore.appendShortTerm(message.trace_id, {
+    trace_id: message.trace_id,
+    role: 'user',
+    phase: 'received',
+    title: 'Inbound message',
+    summary: summarizeTaskText(userText),
+    content: userText,
+    tags: ['message', 'inbound'],
+    source: 'message',
+    source_trace_id: message.trace_id,
+    source_task_id: message.trace_id,
+    metadata: {
+      source_platform: message.source_platform,
+      channel_id: message.channel_id,
+      workspace_id: message.workspace_id,
+    },
+  });
   auditStore.append(message.trace_id, {
     trace_id: message.trace_id,
     kind: 'message.received',
@@ -145,6 +165,18 @@ export async function processInboundMessage(input, store = streamStore) {
       content_types: message.content.map((part) => part.type),
     },
   });
+  memoryStore.appendShortTerm(message.trace_id, {
+    trace_id: message.trace_id,
+    role: 'system',
+    phase: 'normalized',
+    title: 'Normalized message',
+    summary: `Persona hint: ${message.persona_hint ?? 'none'}`,
+    content: `Canonical message contains ${message.content.length} parts`,
+    tags: ['message', 'normalized'],
+    source: 'normalization',
+    source_trace_id: message.trace_id,
+    source_task_id: message.trace_id,
+  });
   taskStore.upsert(message.trace_id, {
     phase: 'normalized',
     checkpoint: {
@@ -162,6 +194,22 @@ export async function processInboundMessage(input, store = streamStore) {
       step_count: plan.steps.length,
       step_titles: plan.steps.map((step) => step.title),
     },
+  });
+  memoryStore.appendShortTerm(message.trace_id, {
+    trace_id: message.trace_id,
+    role: 'system',
+    phase: 'planning',
+    title: 'Plan created',
+    summary: plan.summary,
+    content: plan.goal,
+    facts: [
+      `plan_id=${plan.plan_id}`,
+      `steps=${plan.steps.length}`,
+    ],
+    tags: ['plan', 'planning'],
+    source: 'planning',
+    source_trace_id: message.trace_id,
+    source_task_id: message.trace_id,
   });
   taskStore.upsert(message.trace_id, {
     status: 'planning',
@@ -189,7 +237,28 @@ export async function processInboundMessage(input, store = streamStore) {
     responseComposer,
     worker,
     eventBus,
+    memoryStore,
     onTaskUpdate: ({ phase, summary, runState: snapshot, metadata }) => {
+      memoryStore.appendShortTerm(message.trace_id, {
+        trace_id: message.trace_id,
+        role: 'system',
+        phase,
+        title: phase,
+        summary,
+        content: snapshot?.output?.final_text ?? summary,
+        facts: [
+          ...(metadata?.step_title ? [metadata.step_title] : []),
+          ...(metadata?.tool_name ? [`tool=${metadata.tool_name}`] : []),
+        ],
+        tags: ['task', phase, ...(metadata?.tool_name ? ['tool'] : [])],
+        source: 'execution',
+        source_trace_id: message.trace_id,
+        source_task_id: message.trace_id,
+        metadata: {
+          ...metadata,
+          status: snapshot?.status ?? null,
+        },
+      });
       taskStore.upsert(message.trace_id, {
         status: snapshot?.status ?? 'running',
         phase,
@@ -222,6 +291,15 @@ export async function processInboundMessage(input, store = streamStore) {
       output: runState.output,
     },
   });
+  memoryStore.promoteDurableMemory({
+    taskId: message.trace_id,
+    traceId: message.trace_id,
+    personaId: persona.persona_id,
+    messageText: userText,
+    responseText: runState.output?.final_text ?? '',
+    plan,
+    source: 'task_completion',
+  });
   taskStore.upsert(message.trace_id, {
     status: runState.status,
     phase: 'completed',
@@ -246,6 +324,7 @@ export async function processInboundMessage(input, store = streamStore) {
     stream_url: `/api/stream?task_id=${encodeURIComponent(message.trace_id)}`,
     audit_url: `/api/traces?task_id=${encodeURIComponent(message.trace_id)}`,
     task_url: `/api/tasks?task_id=${encodeURIComponent(message.trace_id)}`,
+    memory_url: `/api/memory?task_id=${encodeURIComponent(message.trace_id)}`,
     events,
   };
 }
@@ -256,6 +335,19 @@ export function getTraceEntries(taskId) {
 
 export function getTaskSnapshot(taskId) {
   return taskStore.get(taskId);
+}
+
+export function getMemorySnapshot(taskId) {
+  return memoryStore.buildContext({ taskId });
+}
+
+export function searchMemory(query, limit = 4) {
+  return memoryStore.searchLongTerm(query, { limit });
+}
+
+function summarizeTaskText(text, limit = 120) {
+  const normalized = String(text ?? '').replace(/\s+/g, ' ').trim();
+  return normalized.length > limit ? `${normalized.slice(0, limit - 3)}...` : normalized;
 }
 
 export function createPlatformServer() {
@@ -302,6 +394,27 @@ export function createPlatformServer() {
         task_id: taskId,
         task: taskStore.get(taskId),
       }, { headOnly: request.method === 'HEAD' });
+      return;
+    }
+
+    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/api/memory') {
+      const taskId = url.searchParams.get('task_id');
+      const query = url.searchParams.get('q') ?? '';
+
+      if (!taskId && !query) {
+        sendJson(response, 400, { error: 'task_id or q is required' });
+        return;
+      }
+
+      sendJson(response, 200, taskId
+        ? {
+          task_id: taskId,
+          memory: memoryStore.buildContext({ taskId, query }),
+        }
+        : {
+          query,
+          items: memoryStore.searchLongTerm(query, { limit: 6 }),
+        }, { headOnly: request.method === 'HEAD' });
       return;
     }
 

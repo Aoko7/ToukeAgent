@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatSseEvent, processInboundMessage, getTaskSnapshot, getTraceEntries } from '../apps/platform/server.mjs';
+import { formatSseEvent, getMemorySnapshot, getTaskSnapshot, getTraceEntries, processInboundMessage, searchMemory } from '../apps/platform/server.mjs';
 import { createStreamStore } from '../apps/platform/src/stream-store.mjs';
 
 test('server pipeline builds plan, run state, and stores stream events', async () => {
@@ -29,6 +29,7 @@ test('server pipeline builds plan, run state, and stores stream events', async (
   assert.equal(result.plan.steps[1].tool_name, 'hybrid_retrieve');
   assert.equal(result.run_state.status, 'completed');
   assert.match(result.task_url, /\/api\/tasks\?task_id=/);
+  assert.match(result.memory_url, /\/api\/memory\?task_id=/);
   assert.equal(replay[0].event_type, 'start');
   assert.equal(replay.at(-1).event_type, 'done');
   assert.equal(replay[2].event_type, 'delta');
@@ -58,4 +59,29 @@ test('server pipeline builds plan, run state, and stores stream events', async (
   assert.equal(task.completed_steps, 3);
   assert.ok(task.checkpoints.some((entry) => entry.kind === 'plan.created'));
   assert.ok(task.checkpoints.some((entry) => entry.kind === 'run.completed'));
+
+  const memory = getMemorySnapshot('trace_test');
+  assert.equal(memory.task_id, 'trace_test');
+  assert.ok(memory.short_term.length > 0);
+});
+
+test('server promotes durable memory for stable user instructions', async () => {
+  const store = createStreamStore();
+  await processInboundMessage({
+    message_id: 'msg_test_memory_1',
+    source_platform: 'web',
+    source_message_id: 'raw_test_memory_1',
+    workspace_id: 'ws_test',
+    channel_id: 'console',
+    conversation_id: 'conv_test_memory',
+    sender: { id: 'user_1', role: 'user' },
+    recipient: { id: 'agent_1', role: 'agent' },
+    content: [{ type: 'text', text: '以后请始终用中文回答，并记住我喜欢简洁输出。' }],
+    trace_id: 'trace_memory_test',
+    persona_hint: 'researcher',
+  }, store);
+
+  const search = searchMemory('简洁输出');
+  assert.ok(search.length > 0);
+  assert.ok(search.some((entry) => entry.title.includes('中文回答')));
 });
