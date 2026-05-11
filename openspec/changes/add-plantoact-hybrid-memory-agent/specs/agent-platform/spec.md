@@ -194,6 +194,21 @@
 - WHEN 系统准备调用
 - THEN 系统 SHALL 根据副作用声明决定是否需要人工审批或降级处理
 
+### Requirement: Tool Execution Policy
+系统 SHALL 按工具契约执行超时、重试、幂等和风险等级策略。
+
+#### Scenario: Retry low-risk idempotent tool
+- GIVEN 一个低风险且幂等的读取型工具出现瞬时失败
+- WHEN registry 执行该工具
+- THEN 系统 SHALL 在声明的重试策略内自动重试
+- AND 系统 SHALL 记录尝试次数与最终结果
+
+#### Scenario: Do not auto-retry high-risk tool
+- GIVEN 一个高风险或非幂等工具执行失败
+- WHEN registry 评估该工具的执行策略
+- THEN 系统 SHALL 默认避免自动重试
+- AND 系统 SHALL 保留失败结果供后续人工审批或补偿处理
+
 ### Requirement: Secrets and Execution Safety
 系统 SHALL 对密钥、敏感数据和高风险执行提供隔离与保护。
 

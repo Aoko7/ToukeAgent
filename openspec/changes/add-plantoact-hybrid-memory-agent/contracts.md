@@ -189,6 +189,13 @@
 | `side_effect_scope` | string | 副作用范围 |
 | `requires_approval` | boolean | 是否默认要求审批 |
 
+### `retry_policy` 建议字段
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `max_attempts` | integer | 最大尝试次数 |
+| `backoff_ms` | integer | 重试等待时间 |
+| `retry_on` | array | 允许自动重试的状态，如 `error`、`timeout` |
+
 ### 调用请求
 ```json
 {
@@ -219,7 +226,12 @@
   },
   "evidence": [],
   "metrics": {
-    "latency_ms": 182
+    "latency_ms": 182,
+    "attempt_count": 1,
+    "retry_count": 0,
+    "timeout_ms": 5000,
+    "risk_level": "low",
+    "idempotent": true
   }
 }
 ```

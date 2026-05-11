@@ -179,15 +179,23 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
           usage: retrievalResult.metrics,
         });
 
+        const toolStepStatus = retrievalResult.status === 'success' ? 'completed' : 'failed';
         runState.step_results.push({
           step_id: step.step_id,
-          status: 'completed',
+          status: toolStepStatus,
           summary: retrievalResult.summary,
           output: retrievalResult.result,
+          error: retrievalResult.status === 'success'
+            ? null
+            : {
+              code: retrievalResult.error_code ?? retrievalResult.status,
+              message: retrievalResult.summary ?? 'Tool execution failed',
+            },
         });
         emitTaskUpdate('tool_result', retrievalResult.summary ?? `Tool ${step.tool_name} completed`, {
           step_id: step.step_id,
           tool_name: step.tool_name,
+          tool_status: retrievalResult.status,
         });
       } else if (step.kind === 'respond') {
         const memorySnapshot = memoryStore?.buildContext({
