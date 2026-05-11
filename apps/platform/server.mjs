@@ -15,6 +15,8 @@ import { createAsyncWorker } from './src/async-worker.mjs';
 import { createAuditStore } from './src/audit-store.mjs';
 import { createTaskStore } from './src/task-store.mjs';
 import { createMemoryStore } from './src/memory-store.mjs';
+import { createEvaluationStore } from './src/evaluation-store.mjs';
+import { createOutputEvaluator } from './src/output-evaluator.mjs';
 import { createWikiStore } from './src/wiki-store.mjs';
 
 const PUBLIC_DIR = resolve(fileURLToPath(new URL('./public/', import.meta.url)));
@@ -22,6 +24,8 @@ const streamStore = createStreamStore();
 const auditStore = createAuditStore();
 const taskStore = createTaskStore();
 const memoryStore = createMemoryStore();
+const evaluationStore = createEvaluationStore();
+const outputEvaluator = createOutputEvaluator();
 const personaRegistry = createPersonaRegistry();
 const planner = createPlanner();
 const toolRegistry = createToolRegistry();
@@ -293,6 +297,18 @@ export async function processInboundMessage(input, store = streamStore) {
       output: runState.output,
     },
   });
+  const evaluation = outputEvaluator.evaluate({
+    message,
+    persona,
+    plan,
+    runState,
+  });
+  evaluationStore.append(message.trace_id, evaluation);
+  auditStore.append(message.trace_id, {
+    trace_id: message.trace_id,
+    kind: 'quality.evaluated',
+    payload: evaluation,
+  });
   memoryStore.promoteDurableMemory({
     taskId: message.trace_id,
     traceId: message.trace_id,
@@ -316,6 +332,20 @@ export async function processInboundMessage(input, store = streamStore) {
       summary: 'Task completed',
     },
   });
+  taskStore.upsert(message.trace_id, {
+    metadata: {
+      evaluation_id: evaluation.evaluation_id,
+      evaluation_score: evaluation.overall_score,
+      evaluation_decision: evaluation.decision,
+    },
+    checkpoint: {
+      kind: 'quality.evaluated',
+      summary: `Quality gate: ${evaluation.decision}`,
+      metadata: {
+        score: evaluation.overall_score,
+      },
+    },
+  });
 
   return {
     message,
@@ -327,6 +357,7 @@ export async function processInboundMessage(input, store = streamStore) {
     audit_url: `/api/traces?task_id=${encodeURIComponent(message.trace_id)}`,
     task_url: `/api/tasks?task_id=${encodeURIComponent(message.trace_id)}`,
     memory_url: `/api/memory?task_id=${encodeURIComponent(message.trace_id)}`,
+    evaluation_url: `/api/evaluations?task_id=${encodeURIComponent(message.trace_id)}`,
     wiki_url: '/api/wiki',
     events,
   };
@@ -342,6 +373,10 @@ export function getTaskSnapshot(taskId) {
 
 export function getMemorySnapshot(taskId) {
   return memoryStore.buildContext({ taskId });
+}
+
+export function getEvaluationSnapshot(taskId) {
+  return evaluationStore.list(taskId);
 }
 
 export function searchMemory(query, limit = 4) {
@@ -417,7 +452,22 @@ export function createPlatformServer() {
         : {
           query,
           items: memoryStore.searchLongTerm(query, { limit: 6 }),
-        }, { headOnly: request.method === 'HEAD' });
+      }, { headOnly: request.method === 'HEAD' });
+      return;
+    }
+
+    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/api/evaluations') {
+      const taskId = url.searchParams.get('task_id');
+      if (!taskId) {
+        sendJson(response, 400, { error: 'task_id is required' });
+        return;
+      }
+
+      sendJson(response, 200, {
+        task_id: taskId,
+        evaluations: evaluationStore.list(taskId),
+        latest: evaluationStore.getLatest(taskId),
+      }, { headOnly: request.method === 'HEAD' });
       return;
     }
 

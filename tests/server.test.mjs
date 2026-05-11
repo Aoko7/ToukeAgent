@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatSseEvent, getMemorySnapshot, getTaskSnapshot, getTraceEntries, processInboundMessage, searchMemory } from '../apps/platform/server.mjs';
+import { formatSseEvent, getEvaluationSnapshot, getMemorySnapshot, getTaskSnapshot, getTraceEntries, processInboundMessage, searchMemory } from '../apps/platform/server.mjs';
 import { createStreamStore } from '../apps/platform/src/stream-store.mjs';
 
 test('server pipeline builds plan, run state, and stores stream events', async () => {
@@ -30,6 +30,7 @@ test('server pipeline builds plan, run state, and stores stream events', async (
   assert.equal(result.run_state.status, 'completed');
   assert.match(result.task_url, /\/api\/tasks\?task_id=/);
   assert.match(result.memory_url, /\/api\/memory\?task_id=/);
+  assert.match(result.evaluation_url, /\/api\/evaluations\?task_id=/);
   assert.match(result.wiki_url, /\/api\/wiki/);
   assert.equal(replay[0].event_type, 'start');
   assert.equal(replay.at(-1).event_type, 'done');
@@ -64,6 +65,10 @@ test('server pipeline builds plan, run state, and stores stream events', async (
   const memory = getMemorySnapshot('trace_test');
   assert.equal(memory.task_id, 'trace_test');
   assert.ok(memory.short_term.length > 0);
+
+  const evaluations = getEvaluationSnapshot('trace_test');
+  assert.ok(evaluations.length > 0);
+  assert.equal(evaluations.at(-1).decision, 'pass');
 });
 
 test('server promotes durable memory for stable user instructions', async () => {
