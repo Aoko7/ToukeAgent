@@ -31,9 +31,9 @@ async function readJsonBody(request) {
   return body ? JSON.parse(body) : {};
 }
 
-function sendJson(response, statusCode, payload) {
+function sendJson(response, statusCode, payload, { headOnly = false } = {}) {
   response.writeHead(statusCode, { 'content-type': 'application/json; charset=utf-8' });
-  response.end(JSON.stringify(payload, null, 2));
+  response.end(headOnly ? undefined : JSON.stringify(payload, null, 2));
 }
 
 export function formatSseEvent(event) {
@@ -46,14 +46,14 @@ function sendSseEvent(response, event) {
   response.write(formatSseEvent(event));
 }
 
-function serveFile(response, filePath) {
+function serveFile(response, filePath, { headOnly = false } = {}) {
   readFile(filePath)
     .then((body) => {
       response.writeHead(200, {
         'content-type': contentType(filePath),
         'cache-control': 'no-store',
       });
-      response.end(body);
+      response.end(headOnly ? undefined : body);
     })
     .catch(() => {
       response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
@@ -123,8 +123,8 @@ export function createPlatformServer() {
   const server = createServer(async (request, response) => {
     const url = new URL(request.url, 'http://localhost');
 
-    if (request.method === 'GET' && url.pathname === '/api/health') {
-      sendJson(response, 200, { ok: true, service: 'toukeagent-platform' });
+    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/api/health') {
+      sendJson(response, 200, { ok: true, service: 'toukeagent-platform' }, { headOnly: request.method === 'HEAD' });
       return;
     }
 
@@ -178,13 +178,13 @@ export function createPlatformServer() {
       return;
     }
 
-    if (request.method === 'GET' && url.pathname === '/app.mjs') {
-      serveFile(response, join(PUBLIC_DIR, 'app.mjs'));
+    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/app.mjs') {
+      serveFile(response, join(PUBLIC_DIR, 'app.mjs'), { headOnly: request.method === 'HEAD' });
       return;
     }
 
-    if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
-      serveFile(response, join(PUBLIC_DIR, 'index.html'));
+    if ((request.method === 'GET' || request.method === 'HEAD') && (url.pathname === '/' || url.pathname === '/index.html')) {
+      serveFile(response, join(PUBLIC_DIR, 'index.html'), { headOnly: request.method === 'HEAD' });
       return;
     }
 
