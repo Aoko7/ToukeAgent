@@ -18,24 +18,7 @@ function buildPlanSummary(plan) {
     .join(' | ');
 }
 
-function composeFinalText({ persona, message, plan, retrievalResult }) {
-  const text = message.content
-    .filter((part) => part.type === 'text')
-    .map((part) => part.text)
-    .join('\n')
-    .trim();
-
-  const sourceTitles = retrievalResult?.result?.items?.map((item) => item.title).join(', ') ?? 'internal stable context';
-  return [
-    `[${persona.name}]`,
-    `Goal: ${plan.goal}`,
-    `Plan: ${buildPlanSummary(plan)}`,
-    `Stable context: ${sourceTitles}`,
-    `Next move: start from the smallest verified slice for "${text}".`,
-  ].join('\n');
-}
-
-export async function runAgentTask({ message, persona, plan, toolRegistry, store }) {
+export async function runAgentTask({ message, persona, plan, toolRegistry, store, responseComposer }) {
   const runState = createAgentRunState({
     run_id: `run_${message.trace_id}`,
     task_id: message.trace_id,
@@ -130,7 +113,7 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
         output: retrievalResult.result,
       });
     } else if (step.kind === 'respond') {
-      const finalText = composeFinalText({ persona, message, plan, retrievalResult });
+      const finalText = await responseComposer.compose({ persona, message, plan, retrievalResult });
       append({
         event_type: 'delta',
         step_id: step.step_id,

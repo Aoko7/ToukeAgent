@@ -8,12 +8,16 @@ import { createPersonaRegistry } from './src/persona-registry.mjs';
 import { createPlanner } from './src/planner.mjs';
 import { runAgentTask } from './src/runtime.mjs';
 import { createToolRegistry, registerDefaultTools } from './src/tool-registry.mjs';
+import { createDeepSeekClient } from './src/deepseek-client.mjs';
+import { createResponseComposer } from './src/response-composer.mjs';
 
 const PUBLIC_DIR = resolve(fileURLToPath(new URL('./public/', import.meta.url)));
 const streamStore = createStreamStore();
 const personaRegistry = createPersonaRegistry();
 const planner = createPlanner();
 const toolRegistry = createToolRegistry();
+const deepseekClient = createDeepSeekClient();
+const responseComposer = createResponseComposer({ client: deepseekClient });
 registerDefaultTools(toolRegistry);
 
 function contentType(pathname) {
@@ -73,13 +77,14 @@ export async function processInboundMessage(input, store = streamStore) {
   const message = createCanonicalMessage(input);
   const persona = personaRegistry.get(message.persona_hint);
   const plan = planner.createPlan({ message, persona });
-  const { runState, events } = await runAgentTask({
-    message,
-    persona,
-    plan,
-    toolRegistry,
-    store,
-  });
+    const { runState, events } = await runAgentTask({
+      message,
+      persona,
+      plan,
+      toolRegistry,
+      store,
+      responseComposer,
+    });
 
   return {
     message,
@@ -97,7 +102,12 @@ export function createPlatformServer() {
     const url = new URL(request.url, 'http://localhost');
 
     if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/api/health') {
-      sendJson(response, 200, { ok: true, service: 'toukeagent-platform' }, { headOnly: request.method === 'HEAD' });
+      sendJson(response, 200, {
+        ok: true,
+        service: 'toukeagent-platform',
+        model_provider: deepseekClient.isConfigured ? 'deepseek' : 'local',
+        model: deepseekClient.model,
+      }, { headOnly: request.method === 'HEAD' });
       return;
     }
 
