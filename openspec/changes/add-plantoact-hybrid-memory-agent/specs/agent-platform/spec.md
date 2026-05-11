@@ -5,8 +5,8 @@
 
 ## Reading Guide
 - 与接入层相关：`Streaming Output`、`SSE Transport`、`Canonical Message Model`、`Platform Adapters`
-- 与运行时相关：`Persona and Role Profiles`、`Plan-to-Act Orchestration`、`Micro-ReAct Step Execution`
-- 与数据层相关：`Short-Term and Long-Term Memory`、`Hybrid Retrieval Routing`、`Hybrid RAG Quality`、`LLM Wiki Freshness`
+- 与运行时相关：`Persona and Role Profiles`、`Plan-to-Act Orchestration`、`Micro-ReAct Step Execution`、`Multi-Agent Coordination`
+- 与数据层相关：`Short-Term and Long-Term Memory`、`Context Window Management and Compression`、`Hybrid Retrieval Routing`、`Hybrid RAG Quality`、`LLM Wiki Freshness`
 - 与治理层相关：`Audit Logging and Provenance`、`Model Output Quality Evaluation`、`Tool and Plugin Registry`、`Secrets and Execution Safety`
 - 与平台化相关：`Human-in-the-Loop Control`、`Knowledge Lifecycle Management`、`SLO and Cost Governance`、`Deployment and Recovery`
 
@@ -308,6 +308,21 @@
 - THEN 系统 SHALL 支持观察、推理、行动和结果回写
 - AND 系统 SHALL 在步骤结束后产出可审计轨迹
 
+### Requirement: Multi-Agent Coordination
+系统 SHALL 支持由 coordinator 管理的多 Agent 协作模式。
+
+#### Scenario: Delegated specialist execution
+- GIVEN 一个任务同时包含检索、生成和审校等可拆分子问题
+- WHEN coordinator 判断单 agent 执行成本过高、需要隔离风险或适合并行处理
+- THEN 系统 SHALL 将子任务委派给 specialist agent
+- AND 每个 specialist agent SHALL 使用独立上下文、工具集和预算
+
+#### Scenario: Structured handoff and join
+- GIVEN 一个 specialist agent 完成子任务
+- WHEN 其结果返回 coordinator
+- THEN 系统 SHALL 通过结构化 handoff 包合并结果
+- AND 系统 SHALL 记录委派输入摘要、输出摘要、证据引用和采纳决策
+
 ### Requirement: Short-Term and Long-Term Memory
 系统 SHALL 同时支持短期记忆与长期记忆。
 
@@ -321,6 +336,21 @@
 - WHEN 系统判断其具备复用价值
 - THEN 系统 SHALL 写入长期记忆
 - AND 系统 SHALL 记录来源与时间戳
+
+### Requirement: Context Window Management and Compression
+系统 SHALL 在上下文接近模型窗口上限时执行预算管理、压缩和恢复。
+
+#### Scenario: Budget-aware compaction
+- GIVEN 当前任务上下文超过模型预算阈值
+- WHEN 系统准备发起下一次模型调用
+- THEN 系统 SHALL 优先保留系统约束、当前步骤、关键证据和未决事项
+- AND 系统 SHALL 将较早历史压缩为可审计摘要
+
+#### Scenario: Compression-assisted resume or handoff
+- GIVEN 任务需要恢复执行或转交给另一个 agent
+- WHEN 原始上下文过大或不适合直接传递
+- THEN 系统 SHALL 使用最近压缩快照和引用指针重建所需上下文
+- AND 系统 SHALL 保留原始事件日志用于审计与回放
 
 ### Requirement: Hybrid Retrieval Routing
 系统 SHALL 根据资料稳定性与结构化程度在 hybrid RAG 与 LLM wiki 之间路由检索。

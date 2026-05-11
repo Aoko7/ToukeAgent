@@ -359,7 +359,115 @@
 | `output` | object | 步骤输出 |
 | `error` | object | 错误信息 |
 
-## 8. 开发约定
+## 8. AgentHandoffPacket
+
+### 用途
+描述 coordinator 与 specialist agent 之间的委派、回传和汇合载荷。
+
+### 建议字段
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `handoff_id` | string | handoff ID |
+| `task_id` | string | 任务 ID |
+| `trace_id` | string | 追踪 ID |
+| `parent_agent_id` | string | 发起委派的 agent |
+| `target_agent_id` | string | 目标 agent |
+| `role` | string | 子 agent 角色，如 `retriever` / `reviewer` |
+| `objective` | string | 子任务目标 |
+| `scope` | object | 允许访问的数据、工具和工作区边界 |
+| `input_summary` | string | 输入摘要 |
+| `must_keep` | array | 必须保留的约束、证据或指令 |
+| `evidence_refs` | array | 相关证据引用 |
+| `context_snapshot_id` | string | 关联上下文快照，可为空 |
+| `output_schema` | object | 预期返回结构 |
+| `status` | string | `created` / `running` / `completed` / `failed` / `cancelled` |
+| `metadata` | object | 扩展字段 |
+
+### 示例
+```json
+{
+  "handoff_id": "handoff_01",
+  "task_id": "task_01",
+  "trace_id": "trace_abc",
+  "parent_agent_id": "agent_main",
+  "target_agent_id": "agent_reviewer_1",
+  "role": "reviewer",
+  "objective": "Review the draft for factual risk and missing evidence",
+  "scope": {
+    "toolset_id": "review_toolset",
+    "workspace_ids": ["ws_research"],
+    "side_effects_allowed": false
+  },
+  "input_summary": "Draft complete. Need evidence and safety review.",
+  "must_keep": [
+    "do_not_hide_risk",
+    "preserve cited evidence"
+  ],
+  "evidence_refs": ["trace_abc:step_02", "wiki_release_notes"],
+  "context_snapshot_id": "ctx_01",
+  "output_schema": {
+    "type": "object",
+    "required": ["findings", "decision"]
+  },
+  "status": "created",
+  "metadata": {}
+}
+```
+
+## 9. ContextCompressionSnapshot
+
+### 用途
+描述上下文预算管理后产出的压缩快照，可供恢复执行、跨 Agent handoff 和下一次模型调用复用。
+
+### 建议字段
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `snapshot_id` | string | 快照 ID |
+| `task_id` | string | 任务 ID |
+| `trace_id` | string | 追踪 ID |
+| `scope` | string | `task` / `agent` / `step` |
+| `model_name` | string | 目标模型 |
+| `compression_strategy` | string | `extractive` / `summary` / `hybrid` |
+| `source_ranges` | array | 压缩来源区间或引用 |
+| `token_budget` | integer | 目标预算 |
+| `token_estimate` | integer | 压缩后估算 token |
+| `must_keep` | array | 不允许丢失的关键项 |
+| `summary` | string | 压缩摘要 |
+| `unresolved_items` | array | 未决事项 |
+| `evidence_refs` | array | 证据引用 |
+| `memory_refs` | array | 关联记忆引用 |
+| `metadata` | object | 扩展字段 |
+| `created_at` | string | ISO 8601 时间 |
+
+### 示例
+```json
+{
+  "snapshot_id": "ctx_01",
+  "task_id": "task_01",
+  "trace_id": "trace_abc",
+  "scope": "task",
+  "model_name": "deepseek-v4-flash",
+  "compression_strategy": "hybrid",
+  "source_ranges": ["seq:1-48", "memory:ltm_12", "wiki_release_notes"],
+  "token_budget": 12000,
+  "token_estimate": 8420,
+  "must_keep": [
+    "current step objective",
+    "latest tool result",
+    "safety boundaries"
+  ],
+  "summary": "Plan drafted. Retrieval complete. Waiting for reviewer findings before final answer.",
+  "unresolved_items": [
+    "Confirm version status from wiki"
+  ],
+  "evidence_refs": ["call_step_02", "wiki_release_notes"],
+  "memory_refs": ["stm_14", "ltm_3"],
+  "metadata": {},
+  "created_at": "2026-05-11T12:00:00Z"
+}
+```
+
+## 10. 开发约定
 
 ### 前端
 - 只依赖 `CanonicalMessage` 和 `StreamEvent`
@@ -368,6 +476,7 @@
 ### 后端编排
 - 只依赖 `ToolInvocationContract` 和 `PersonaProfile`
 - 不把 UI 展示逻辑塞进编排状态机
+- 多 Agent 协作优先通过 `AgentHandoffPacket` 和 `ContextCompressionSnapshot` 传递状态，而不是直接拼接整段历史
 
 ### 适配层
 - 负责平台字段映射、流式能力降级和回执回写

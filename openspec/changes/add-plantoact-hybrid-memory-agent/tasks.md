@@ -36,3 +36,9 @@
 ## Phase 4: Resilience and Optimization
 26. 实现任务恢复、死信处理、重放与灾备演练接口。
 27. 为 RL 预留 reward、policy log 与安全门禁接口。
+
+## Phase 4.5: Scale-Out Orchestration
+28. 定义多 Agent 的 coordinator / specialist 角色、handoff packet、隔离和汇合策略。
+29. 实现多 Agent 委派、结果汇总、失败回退与审计链。
+30. 定义上下文预算、压缩快照、恢复与跨 Agent 传递契约。
+31. 实现 context budget manager、分层裁剪、压缩摘要与基于快照的恢复。

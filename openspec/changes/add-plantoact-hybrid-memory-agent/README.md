@@ -16,7 +16,7 @@
 6. 排期和拆工时读 `tasks.md`
 
 ## 一句话目标
-构建一个可扩展的 agent 平台：顶层使用 `Plan-to-Act`，步骤内使用 `micro-ReAct`，并同时具备长短期记忆、混合检索、人格切换、跨平台消息适配、流式输出、审计追溯和质量门禁。
+构建一个可扩展的 agent 平台：顶层使用 `Plan-to-Act`，步骤内使用 `micro-ReAct`，并同时具备长短期记忆、混合检索、人格切换、多 Agent 协作、上下文压缩、跨平台消息适配、流式输出、审计追溯和质量门禁。
 
 ## 最小可落地闭环
 建议第一阶段只打通一条最短路径：
@@ -30,8 +30,10 @@
 
 这条路径跑通后，再逐步扩展到：
 - 多人格切换
+- 多 Agent 协作
 - 多平台消息适配
 - LLM wiki
+- 长上下文压缩与恢复
 - 人工审批
 - 质量评测
 - RL 接口
@@ -45,6 +47,8 @@
 5. `RouteBinding`：渠道、人格和 agent 绑定关系
 6. `AgentPlan`：任务规划对象
 7. `AgentRunState`：运行时状态对象
+8. `AgentHandoffPacket`：多 Agent 委派与结果回传对象
+9. `ContextCompressionSnapshot`：上下文压缩和恢复对象
 
 字段定义见 `contracts.md`。
 
