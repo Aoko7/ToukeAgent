@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createCanonicalMessage, createStreamEvent } from '../../packages/contracts/src/index.mjs';
+import { createCanonicalMessage } from '../../packages/contracts/src/index.mjs';
 import { createStreamStore } from './src/stream-store.mjs';
 import { createPersonaRegistry } from './src/persona-registry.mjs';
 import { createPlanner } from './src/planner.mjs';
@@ -12,9 +12,11 @@ import { createDeepSeekClient } from './src/deepseek-client.mjs';
 import { createResponseComposer } from './src/response-composer.mjs';
 import { createEventBus } from './src/event-bus.mjs';
 import { createAsyncWorker } from './src/async-worker.mjs';
+import { createAuditStore } from './src/audit-store.mjs';
 
 const PUBLIC_DIR = resolve(fileURLToPath(new URL('./public/', import.meta.url)));
 const streamStore = createStreamStore();
+const auditStore = createAuditStore();
 const personaRegistry = createPersonaRegistry();
 const planner = createPlanner();
 const toolRegistry = createToolRegistry();
@@ -29,6 +31,16 @@ worker.register('response.compose', async ({ persona, message, plan, retrievalRe
   content: await responseComposer.compose({ persona, message, plan, retrievalResult }),
   summary: 'Response composed',
 }));
+
+eventBus.subscribeAll((event) => {
+  if (event.task_id) {
+    auditStore.append(event.task_id, {
+      trace_id: event.trace_id ?? event.task_id,
+      kind: event.topic,
+      payload: event,
+    });
+  }
+});
 
 function contentType(pathname) {
   switch (extname(pathname)) {
@@ -86,7 +98,36 @@ function serveFile(response, filePath, { headOnly = false } = {}) {
 export async function processInboundMessage(input, store = streamStore) {
   const message = createCanonicalMessage(input);
   const persona = personaRegistry.get(message.persona_hint);
+  auditStore.append(message.trace_id, {
+    trace_id: message.trace_id,
+    kind: 'message.received',
+    payload: {
+      message_id: message.message_id,
+      source_platform: message.source_platform,
+      workspace_id: message.workspace_id,
+      channel_id: message.channel_id,
+      conversation_id: message.conversation_id,
+    },
+  });
+  auditStore.append(message.trace_id, {
+    trace_id: message.trace_id,
+    kind: 'message.normalized',
+    payload: {
+      persona_hint: message.persona_hint,
+      content_types: message.content.map((part) => part.type),
+    },
+  });
   const plan = planner.createPlan({ message, persona });
+  auditStore.append(message.trace_id, {
+    trace_id: message.trace_id,
+    kind: 'plan.created',
+    payload: {
+      plan_id: plan.plan_id,
+      persona_id: persona.persona_id,
+      step_count: plan.steps.length,
+      step_titles: plan.steps.map((step) => step.title),
+    },
+  });
   const { runState, events } = await runAgentTask({
     message,
     persona,
@@ -97,6 +138,15 @@ export async function processInboundMessage(input, store = streamStore) {
     worker,
     eventBus,
   });
+  auditStore.append(message.trace_id, {
+    trace_id: message.trace_id,
+    kind: 'run.completed',
+    payload: {
+      status: runState.status,
+      completed_steps: runState.completed_steps,
+      output: runState.output,
+    },
+  });
 
   return {
     message,
@@ -105,8 +155,13 @@ export async function processInboundMessage(input, store = streamStore) {
     run_state: runState,
     task_id: message.trace_id,
     stream_url: `/api/stream?task_id=${encodeURIComponent(message.trace_id)}`,
+    audit_url: `/api/traces?task_id=${encodeURIComponent(message.trace_id)}`,
     events,
   };
+}
+
+export function getTraceEntries(taskId) {
+  return auditStore.list(taskId);
 }
 
 export function createPlatformServer() {
@@ -124,6 +179,20 @@ export function createPlatformServer() {
         model_config_path: deepseekClient.configPath,
         worker_active: workerSnapshot.active,
         worker_queued: workerSnapshot.queued,
+      }, { headOnly: request.method === 'HEAD' });
+      return;
+    }
+
+    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/api/traces') {
+      const taskId = url.searchParams.get('task_id');
+      if (!taskId) {
+        sendJson(response, 400, { error: 'task_id is required' });
+        return;
+      }
+
+      sendJson(response, 200, {
+        task_id: taskId,
+        entries: auditStore.list(taskId),
       }, { headOnly: request.method === 'HEAD' });
       return;
     }

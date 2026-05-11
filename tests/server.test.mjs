@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatSseEvent, processInboundMessage } from '../apps/platform/server.mjs';
+import { formatSseEvent, processInboundMessage, getTraceEntries } from '../apps/platform/server.mjs';
 import { createStreamStore } from '../apps/platform/src/stream-store.mjs';
 
 test('server pipeline builds plan, run state, and stores stream events', async () => {
@@ -39,4 +39,11 @@ test('server pipeline builds plan, run state, and stores stream events', async (
   assert.match(sseText, /event: done/);
   assert.match(sseText, /trace_test/);
   assert.match(sseText, /Plan ready/);
+
+  const traceEntries = getTraceEntries('trace_test');
+  assert.ok(traceEntries.some((entry) => entry.kind === 'message.received'));
+  assert.ok(traceEntries.some((entry) => entry.kind === 'plan.created'));
+  assert.ok(traceEntries.some((entry) => entry.kind === 'worker.job.queued'));
+  assert.ok(traceEntries.some((entry) => entry.kind === 'worker.job.completed'));
+  assert.ok(traceEntries.some((entry) => entry.kind === 'run.completed'));
 });
