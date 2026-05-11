@@ -27,11 +27,14 @@ test('server pipeline builds plan, run state, and stores stream events', async (
   assert.equal(result.persona.persona_id, 'researcher');
   assert.equal(result.plan.steps.length, 3);
   assert.equal(result.run_state.status, 'completed');
-  assert.equal(replay.length, 10);
   assert.equal(replay[0].event_type, 'start');
   assert.equal(replay.at(-1).event_type, 'done');
   assert.equal(replay[2].event_type, 'delta');
-  assert.equal(replay[5].event_type, 'tool_call');
+  assert.ok(replay.some((event) => event.event_type === 'tool_call'));
+  assert.ok(replay.some((event) => event.event_type === 'tool_result'));
+  assert.ok(replay.some((event) => event.event_type === 'status' && event.payload.state === 'worker_queued'));
+  assert.ok(replay.some((event) => event.event_type === 'status' && event.payload.state === 'worker_running'));
+  assert.ok(replay.some((event) => event.event_type === 'status' && event.payload.state === 'worker_completed'));
   assert.match(sseText, /event: start/);
   assert.match(sseText, /event: done/);
   assert.match(sseText, /trace_test/);

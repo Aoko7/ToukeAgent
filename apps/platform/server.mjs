@@ -10,6 +10,8 @@ import { runAgentTask } from './src/runtime.mjs';
 import { createToolRegistry, registerDefaultTools } from './src/tool-registry.mjs';
 import { createDeepSeekClient } from './src/deepseek-client.mjs';
 import { createResponseComposer } from './src/response-composer.mjs';
+import { createEventBus } from './src/event-bus.mjs';
+import { createAsyncWorker } from './src/async-worker.mjs';
 
 const PUBLIC_DIR = resolve(fileURLToPath(new URL('./public/', import.meta.url)));
 const streamStore = createStreamStore();
@@ -18,7 +20,15 @@ const planner = createPlanner();
 const toolRegistry = createToolRegistry();
 const deepseekClient = createDeepSeekClient();
 const responseComposer = createResponseComposer({ client: deepseekClient });
+const eventBus = createEventBus();
+const worker = createAsyncWorker({ bus: eventBus });
 registerDefaultTools(toolRegistry);
+
+worker.register('tool.invoke', async ({ request }) => toolRegistry.invoke(request));
+worker.register('response.compose', async ({ persona, message, plan, retrievalResult }) => ({
+  content: await responseComposer.compose({ persona, message, plan, retrievalResult }),
+  summary: 'Response composed',
+}));
 
 function contentType(pathname) {
   switch (extname(pathname)) {
@@ -77,14 +87,16 @@ export async function processInboundMessage(input, store = streamStore) {
   const message = createCanonicalMessage(input);
   const persona = personaRegistry.get(message.persona_hint);
   const plan = planner.createPlan({ message, persona });
-    const { runState, events } = await runAgentTask({
-      message,
-      persona,
-      plan,
-      toolRegistry,
-      store,
-      responseComposer,
-    });
+  const { runState, events } = await runAgentTask({
+    message,
+    persona,
+    plan,
+    toolRegistry,
+    store,
+    responseComposer,
+    worker,
+    eventBus,
+  });
 
   return {
     message,
@@ -102,6 +114,7 @@ export function createPlatformServer() {
     const url = new URL(request.url, 'http://localhost');
 
     if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/api/health') {
+      const workerSnapshot = worker.snapshot();
       sendJson(response, 200, {
         ok: true,
         service: 'toukeagent-platform',
@@ -109,6 +122,8 @@ export function createPlatformServer() {
         model: deepseekClient.model,
         model_config_source: deepseekClient.configSource,
         model_config_path: deepseekClient.configPath,
+        worker_active: workerSnapshot.active,
+        worker_queued: workerSnapshot.queued,
       }, { headOnly: request.method === 'HEAD' });
       return;
     }
