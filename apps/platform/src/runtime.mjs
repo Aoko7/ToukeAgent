@@ -54,7 +54,7 @@ function attachWorkerStatusBridge({ eventBus, append, taskId, runId }) {
   };
 }
 
-export async function runAgentTask({ message, persona, plan, toolRegistry, store, responseComposer, worker = null, eventBus = null }) {
+export async function runAgentTask({ message, persona, plan, toolRegistry, store, responseComposer, worker = null, eventBus = null, onTaskUpdate = null }) {
   const runState = createAgentRunState({
     run_id: `run_${message.trace_id}`,
     task_id: message.trace_id,
@@ -84,16 +84,27 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
     runId: runState.run_id,
   });
 
+  const emitTaskUpdate = (phase, summary, metadata = {}) => {
+    onTaskUpdate?.({
+      phase,
+      summary,
+      runState,
+      metadata,
+    });
+  };
+
   try {
     append({
       event_type: 'start',
       payload: { title: 'Processing request', mode: 'assistant' },
     });
+    emitTaskUpdate('start', 'Processing request started');
 
     append({
       event_type: 'status',
       payload: { state: 'planning', message: 'Plan created from the inbound request' },
     });
+    emitTaskUpdate('planning', 'Plan created from the inbound request');
 
     append({
       event_type: 'delta',
@@ -101,10 +112,15 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
     });
 
     runState.status = 'running';
+    emitTaskUpdate('running', 'Execution started');
 
     let retrievalResult = null;
     for (const step of plan.steps) {
       runState.current_step_id = step.step_id;
+      emitTaskUpdate('step_start', `Starting step: ${step.title}`, {
+        step_id: step.step_id,
+        step_title: step.title,
+      });
 
       append({
         event_type: 'status',
@@ -169,6 +185,10 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
           summary: retrievalResult.summary,
           output: retrievalResult.result,
         });
+        emitTaskUpdate('tool_result', retrievalResult.summary ?? `Tool ${step.tool_name} completed`, {
+          step_id: step.step_id,
+          tool_name: step.tool_name,
+        });
       } else if (step.kind === 'respond') {
         const finalText = worker
           ? (await worker.dispatch({
@@ -197,6 +217,9 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
           summary: 'Response composed',
           output: runState.output,
         });
+        emitTaskUpdate('response', 'Final response composed', {
+          step_id: step.step_id,
+        });
       } else {
         runState.step_results.push({
           step_id: step.step_id,
@@ -204,13 +227,20 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
           summary: step.objective,
           output: { note: 'reasoning step complete' },
         });
+        emitTaskUpdate('reasoning', step.objective, {
+          step_id: step.step_id,
+        });
       }
 
       runState.completed_steps += 1;
+      emitTaskUpdate('step_completed', `Completed step: ${step.title}`, {
+        step_id: step.step_id,
+      });
     }
 
     runState.current_step_id = null;
     runState.status = 'completed';
+    emitTaskUpdate('completed', 'Task completed');
 
     append({
       event_type: 'done',

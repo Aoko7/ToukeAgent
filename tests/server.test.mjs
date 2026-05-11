@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatSseEvent, processInboundMessage, getTraceEntries } from '../apps/platform/server.mjs';
+import { formatSseEvent, processInboundMessage, getTaskSnapshot, getTraceEntries } from '../apps/platform/server.mjs';
 import { createStreamStore } from '../apps/platform/src/stream-store.mjs';
 
 test('server pipeline builds plan, run state, and stores stream events', async () => {
@@ -27,6 +27,7 @@ test('server pipeline builds plan, run state, and stores stream events', async (
   assert.equal(result.persona.persona_id, 'researcher');
   assert.equal(result.plan.steps.length, 3);
   assert.equal(result.run_state.status, 'completed');
+  assert.match(result.task_url, /\/api\/tasks\?task_id=/);
   assert.equal(replay[0].event_type, 'start');
   assert.equal(replay.at(-1).event_type, 'done');
   assert.equal(replay[2].event_type, 'delta');
@@ -46,4 +47,14 @@ test('server pipeline builds plan, run state, and stores stream events', async (
   assert.ok(traceEntries.some((entry) => entry.kind === 'worker.job.queued'));
   assert.ok(traceEntries.some((entry) => entry.kind === 'worker.job.completed'));
   assert.ok(traceEntries.some((entry) => entry.kind === 'run.completed'));
+
+  const task = getTaskSnapshot('trace_test');
+  assert.equal(task.task_id, 'trace_test');
+  assert.equal(task.status, 'completed');
+  assert.equal(task.phase, 'completed');
+  assert.equal(task.plan.plan_id, result.plan.plan_id);
+  assert.equal(task.total_steps, 3);
+  assert.equal(task.completed_steps, 3);
+  assert.ok(task.checkpoints.some((entry) => entry.kind === 'plan.created'));
+  assert.ok(task.checkpoints.some((entry) => entry.kind === 'run.completed'));
 });

@@ -13,10 +13,12 @@ import { createResponseComposer } from './src/response-composer.mjs';
 import { createEventBus } from './src/event-bus.mjs';
 import { createAsyncWorker } from './src/async-worker.mjs';
 import { createAuditStore } from './src/audit-store.mjs';
+import { createTaskStore } from './src/task-store.mjs';
 
 const PUBLIC_DIR = resolve(fileURLToPath(new URL('./public/', import.meta.url)));
 const streamStore = createStreamStore();
 const auditStore = createAuditStore();
+const taskStore = createTaskStore();
 const personaRegistry = createPersonaRegistry();
 const planner = createPlanner();
 const toolRegistry = createToolRegistry();
@@ -98,6 +100,15 @@ function serveFile(response, filePath, { headOnly = false } = {}) {
 export async function processInboundMessage(input, store = streamStore) {
   const message = createCanonicalMessage(input);
   const persona = personaRegistry.get(message.persona_hint);
+  const taskSummary = {
+    message_id: message.message_id,
+    source_platform: message.source_platform,
+    workspace_id: message.workspace_id,
+    channel_id: message.channel_id,
+    conversation_id: message.conversation_id,
+    persona_hint: message.persona_hint,
+    content_preview: message.content.find((part) => part.type === 'text')?.text ?? '',
+  };
   auditStore.append(message.trace_id, {
     trace_id: message.trace_id,
     kind: 'message.received',
@@ -109,12 +120,36 @@ export async function processInboundMessage(input, store = streamStore) {
       conversation_id: message.conversation_id,
     },
   });
+  taskStore.upsert(message.trace_id, {
+    trace_id: message.trace_id,
+    status: 'received',
+    phase: 'received',
+    persona_id: persona.persona_id,
+    message: taskSummary,
+    metadata: {
+      source_platform: message.source_platform,
+      workspace_id: message.workspace_id,
+      channel_id: message.channel_id,
+      conversation_id: message.conversation_id,
+    },
+    checkpoint: {
+      kind: 'message.received',
+      summary: 'Inbound message accepted',
+    },
+  });
   auditStore.append(message.trace_id, {
     trace_id: message.trace_id,
     kind: 'message.normalized',
     payload: {
       persona_hint: message.persona_hint,
       content_types: message.content.map((part) => part.type),
+    },
+  });
+  taskStore.upsert(message.trace_id, {
+    phase: 'normalized',
+    checkpoint: {
+      kind: 'message.normalized',
+      summary: 'Canonical message normalized',
     },
   });
   const plan = planner.createPlan({ message, persona });
@@ -128,6 +163,23 @@ export async function processInboundMessage(input, store = streamStore) {
       step_titles: plan.steps.map((step) => step.title),
     },
   });
+  taskStore.upsert(message.trace_id, {
+    status: 'planning',
+    phase: 'planning',
+    plan_id: plan.plan_id,
+    total_steps: plan.steps.length,
+    plan: {
+      plan_id: plan.plan_id,
+      goal: plan.goal,
+      summary: plan.summary,
+      step_count: plan.steps.length,
+      steps: plan.steps,
+    },
+    checkpoint: {
+      kind: 'plan.created',
+      summary: 'Plan created',
+    },
+  });
   const { runState, events } = await runAgentTask({
     message,
     persona,
@@ -137,6 +189,29 @@ export async function processInboundMessage(input, store = streamStore) {
     responseComposer,
     worker,
     eventBus,
+    onTaskUpdate: ({ phase, summary, runState: snapshot, metadata }) => {
+      taskStore.upsert(message.trace_id, {
+        status: snapshot?.status ?? 'running',
+        phase,
+        plan_id: plan.plan_id,
+        persona_id: persona.persona_id,
+        current_step_id: snapshot?.current_step_id ?? null,
+        completed_steps: snapshot?.completed_steps ?? 0,
+        total_steps: snapshot?.total_steps ?? plan.steps.length,
+        step_results: snapshot?.step_results ?? [],
+        output: snapshot?.output ?? null,
+        run_state: snapshot ?? null,
+        metadata: {
+          ...(metadata ?? {}),
+          source_platform: message.source_platform,
+        },
+        checkpoint: {
+          kind: phase,
+          summary,
+          metadata: metadata ?? {},
+        },
+      });
+    },
   });
   auditStore.append(message.trace_id, {
     trace_id: message.trace_id,
@@ -145,6 +220,20 @@ export async function processInboundMessage(input, store = streamStore) {
       status: runState.status,
       completed_steps: runState.completed_steps,
       output: runState.output,
+    },
+  });
+  taskStore.upsert(message.trace_id, {
+    status: runState.status,
+    phase: 'completed',
+    current_step_id: runState.current_step_id,
+    completed_steps: runState.completed_steps,
+    total_steps: runState.total_steps,
+    step_results: runState.step_results,
+    run_state: runState,
+    output: runState.output,
+    checkpoint: {
+      kind: 'run.completed',
+      summary: 'Task completed',
     },
   });
 
@@ -156,12 +245,17 @@ export async function processInboundMessage(input, store = streamStore) {
     task_id: message.trace_id,
     stream_url: `/api/stream?task_id=${encodeURIComponent(message.trace_id)}`,
     audit_url: `/api/traces?task_id=${encodeURIComponent(message.trace_id)}`,
+    task_url: `/api/tasks?task_id=${encodeURIComponent(message.trace_id)}`,
     events,
   };
 }
 
 export function getTraceEntries(taskId) {
   return auditStore.list(taskId);
+}
+
+export function getTaskSnapshot(taskId) {
+  return taskStore.get(taskId);
 }
 
 export function createPlatformServer() {
@@ -193,6 +287,20 @@ export function createPlatformServer() {
       sendJson(response, 200, {
         task_id: taskId,
         entries: auditStore.list(taskId),
+      }, { headOnly: request.method === 'HEAD' });
+      return;
+    }
+
+    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/api/tasks') {
+      const taskId = url.searchParams.get('task_id');
+      if (!taskId) {
+        sendJson(response, 400, { error: 'task_id is required' });
+        return;
+      }
+
+      sendJson(response, 200, {
+        task_id: taskId,
+        task: taskStore.get(taskId),
       }, { headOnly: request.method === 'HEAD' });
       return;
     }
