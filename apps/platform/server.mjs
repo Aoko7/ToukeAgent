@@ -16,9 +16,12 @@ import { createAuditStore } from './src/audit-store.mjs';
 import { createTaskStore } from './src/task-store.mjs';
 import { createMemoryStore } from './src/memory-store.mjs';
 import { createEvaluationStore } from './src/evaluation-store.mjs';
+import { createEvaluationHarness } from './src/evaluation-harness.mjs';
 import { createOutputEvaluator } from './src/output-evaluator.mjs';
+import { createHarnessStore } from './src/harness-store.mjs';
 import { createQualityGate } from './src/quality-gate.mjs';
 import { createReviewStore } from './src/review-store.mjs';
+import { createTraceCollector } from './src/trace-collector.mjs';
 import { createWikiStore } from './src/wiki-store.mjs';
 
 const PUBLIC_DIR = resolve(fileURLToPath(new URL('./public/', import.meta.url)));
@@ -32,6 +35,20 @@ const qualityGate = createQualityGate({
   sampleRate: Number(process.env.QUALITY_REVIEW_SAMPLE_RATE ?? 0) || 0,
 });
 const reviewStore = createReviewStore();
+const harnessStore = createHarnessStore();
+const traceCollector = createTraceCollector({
+  auditStore,
+  streamStore,
+  taskStore,
+  evaluationStore,
+  reviewStore,
+  memoryStore,
+});
+const evaluationHarness = createEvaluationHarness({
+  executeTask: (input) => processInboundMessage(input, streamStore),
+  collectTraceBundle: (taskId) => traceCollector.collect(taskId),
+  harnessStore,
+});
 const personaRegistry = createPersonaRegistry();
 const planner = createPlanner();
 const toolRegistry = createToolRegistry();
@@ -410,6 +427,7 @@ export async function processInboundMessage(input, store = streamStore) {
     task_id: message.trace_id,
     stream_url: `/api/stream?task_id=${encodeURIComponent(message.trace_id)}`,
     audit_url: `/api/traces?task_id=${encodeURIComponent(message.trace_id)}`,
+    trace_bundle_url: `/api/traces/bundle?task_id=${encodeURIComponent(message.trace_id)}`,
     task_url: `/api/tasks?task_id=${encodeURIComponent(message.trace_id)}`,
     memory_url: `/api/memory?task_id=${encodeURIComponent(message.trace_id)}`,
     evaluation_url: `/api/evaluations?task_id=${encodeURIComponent(message.trace_id)}`,
@@ -422,6 +440,10 @@ export async function processInboundMessage(input, store = streamStore) {
 
 export function getTraceEntries(taskId) {
   return auditStore.list(taskId);
+}
+
+export function getTraceBundle(taskId) {
+  return traceCollector.collect(taskId);
 }
 
 export function getTaskSnapshot(taskId) {
@@ -438,6 +460,18 @@ export function getEvaluationSnapshot(taskId) {
 
 export function getReviewSnapshot(taskId) {
   return reviewStore.list({ taskId });
+}
+
+export function getHarnessRun(runId) {
+  return harnessStore.get(runId);
+}
+
+export function listHarnessRuns() {
+  return harnessStore.list();
+}
+
+export async function runEvaluationHarness(cases = [], metadata = {}) {
+  return evaluationHarness.run({ cases, metadata });
 }
 
 export function searchMemory(query, limit = 4) {
@@ -479,6 +513,17 @@ export function createPlatformServer() {
         task_id: taskId,
         entries: auditStore.list(taskId),
       }, { headOnly: request.method === 'HEAD' });
+      return;
+    }
+
+    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/api/traces/bundle') {
+      const taskId = url.searchParams.get('task_id');
+      if (!taskId) {
+        sendJson(response, 400, { error: 'task_id is required' });
+        return;
+      }
+
+      sendJson(response, 200, getTraceBundle(taskId), { headOnly: request.method === 'HEAD' });
       return;
     }
 
@@ -529,6 +574,30 @@ export function createPlatformServer() {
         evaluations: evaluationStore.list(taskId),
         latest: evaluationStore.getLatest(taskId),
       }, { headOnly: request.method === 'HEAD' });
+      return;
+    }
+
+    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/api/harness/runs') {
+      const runId = url.searchParams.get('run_id');
+      if (runId) {
+        sendJson(response, 200, { run: getHarnessRun(runId) }, { headOnly: request.method === 'HEAD' });
+        return;
+      }
+
+      sendJson(response, 200, {
+        runs: listHarnessRuns(),
+      }, { headOnly: request.method === 'HEAD' });
+      return;
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/harness/runs') {
+      try {
+        const input = await readJsonBody(request);
+        const run = await runEvaluationHarness(input.cases ?? [], input.metadata ?? {});
+        sendJson(response, 200, { run });
+      } catch (error) {
+        sendJson(response, 400, { error: error instanceof Error ? error.message : 'Bad Request' });
+      }
       return;
     }
 

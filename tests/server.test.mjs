@@ -1,13 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  getHarnessRun,
   formatSseEvent,
   getEvaluationSnapshot,
   getMemorySnapshot,
+  getTraceBundle,
   getReviewSnapshot,
   getTaskSnapshot,
   getTraceEntries,
   processInboundMessage,
+  runEvaluationHarness,
   searchMemory,
 } from '../apps/platform/server.mjs';
 import { createStreamStore } from '../apps/platform/src/stream-store.mjs';
@@ -41,6 +44,7 @@ test('server pipeline builds plan, run state, and stores stream events', async (
   assert.match(result.memory_url, /\/api\/memory\?task_id=/);
   assert.match(result.evaluation_url, /\/api\/evaluations\?task_id=/);
   assert.match(result.review_url, /\/api\/reviews\?task_id=/);
+  assert.match(result.trace_bundle_url, /\/api\/traces\/bundle\?task_id=/);
   assert.match(result.wiki_url, /\/api\/wiki/);
   assert.equal(result.quality_gate.status, 'passed');
   assert.equal(replay[0].event_type, 'start');
@@ -83,6 +87,11 @@ test('server pipeline builds plan, run state, and stores stream events', async (
 
   const reviews = getReviewSnapshot('trace_test');
   assert.equal(reviews.length, 0);
+
+  const bundle = getTraceBundle('trace_test');
+  assert.equal(bundle.exists, true);
+  assert.equal(bundle.metrics.final_status, 'completed');
+  assert.equal(bundle.metrics.tool_compliance_rate, 1);
 });
 
 test('server promotes durable memory for stable user instructions', async () => {
@@ -142,4 +151,48 @@ test('server queues manual review when quality gate blocks unsafe output', async
   const traceEntries = getTraceEntries('trace_review_test');
   assert.ok(traceEntries.some((entry) => entry.kind === 'quality.gate_applied'));
   assert.ok(traceEntries.some((entry) => entry.kind === 'review.created'));
+});
+
+test('server can run an evaluation harness batch and persist the run', async () => {
+  const run = await runEvaluationHarness([
+    {
+      case_id: 'harness_case_1',
+      input: {
+        message_id: 'msg_harness_1',
+        source_platform: 'web',
+        source_message_id: 'raw_harness_1',
+        workspace_id: 'ws_harness',
+        channel_id: 'console',
+        conversation_id: 'conv_harness_1',
+        sender: { id: 'user_1', role: 'user' },
+        recipient: { id: 'agent_1', role: 'agent' },
+        content: [{ type: 'text', text: 'hello world' }],
+        trace_id: 'trace_harness_1',
+        persona_hint: 'researcher',
+      },
+    },
+    {
+      case_id: 'harness_case_2',
+      input: {
+        message_id: 'msg_harness_2',
+        source_platform: 'web',
+        source_message_id: 'raw_harness_2',
+        workspace_id: 'ws_harness',
+        channel_id: 'console',
+        conversation_id: 'conv_harness_2',
+        sender: { id: 'user_1', role: 'user' },
+        recipient: { id: 'agent_1', role: 'agent' },
+        content: [{ type: 'text', text: '请告诉我最新版本和价格状态' }],
+        trace_id: 'trace_harness_2',
+        persona_hint: 'researcher',
+      },
+    },
+  ], { suite: 'server-test' });
+
+  const persisted = getHarnessRun(run.run_id);
+  assert.equal(run.summary.case_count, 2);
+  assert.equal(persisted.summary.case_count, 2);
+  assert.equal(persisted.metadata.suite, 'server-test');
+  assert.equal(run.case_results.length, 2);
+  assert.ok(run.case_results.every((item) => item.trace_bundle.exists));
 });

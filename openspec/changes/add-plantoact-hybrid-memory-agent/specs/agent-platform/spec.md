@@ -140,6 +140,21 @@
 - WHEN 运维或审核人员检查该响应来源
 - THEN 系统 SHALL 展示模型版本、提示词版本、上下文片段和引用依据
 
+### Requirement: Trace Bundle and Evaluation Harness
+系统 SHALL 提供可回放的轨迹 bundle 导出能力，并复用其进行离线评测 harness。
+
+#### Scenario: Trace bundle export
+- GIVEN 一个已完成的任务轨迹
+- WHEN 用户或评测系统请求轨迹导出
+- THEN 系统 SHALL 汇总任务状态、审计日志、流式事件、记忆、评测和复核结果
+- AND 系统 SHALL 提供稳定的 bundle 结构供回放或离线分析使用
+
+#### Scenario: Batch harness execution
+- GIVEN 一批标准任务案例
+- WHEN 系统运行离线评测 harness
+- THEN 系统 SHALL 执行每个案例并采集对应轨迹 bundle
+- AND 系统 SHALL 输出批量成功率与基础质量指标
+
 ### Requirement: Model Output Quality Evaluation
 系统 SHALL 对模型生成内容提供质量评估、抽样复核与门禁控制。
 
