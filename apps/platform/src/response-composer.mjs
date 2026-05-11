@@ -6,12 +6,14 @@ export function createResponseComposer({ client } = {}) {
       .join('\n')
       .trim();
 
-    const sourceTitles = retrievalResult?.result?.items?.map((item) => item.title).join(', ') ?? 'internal stable context';
+    const sourceTitles = retrievalResult?.result?.items?.map((item) => `${item.title} (${item.source_type ?? 'context'})`).join(', ') ?? 'internal stable context';
+    const routeMode = retrievalResult?.result?.route?.mode ?? 'rag-first';
     return [
       `[${persona.name}]`,
       `Goal: ${plan.goal}`,
       `Plan: ${plan.steps.map((step, index) => `${index + 1}. ${step.title}`).join(' | ')}`,
-      `Stable context: ${sourceTitles}`,
+      `Retrieval route: ${routeMode}`,
+      `Context: ${sourceTitles}`,
       `Next move: start from the smallest verified slice for "${text}".`,
     ].join('\n');
   }
@@ -22,7 +24,8 @@ export function createResponseComposer({ client } = {}) {
         return localCompose({ persona, message, plan, retrievalResult });
       }
 
-      const sourceTitles = retrievalResult?.result?.items?.map((item) => item.title).join(', ') ?? 'internal stable context';
+      const sourceTitles = retrievalResult?.result?.items?.map((item) => `${item.title} (${item.source_type ?? 'context'})`).join(', ') ?? 'internal stable context';
+      const routeMode = retrievalResult?.result?.route?.mode ?? 'rag-first';
       const userText = message.content
         .filter((part) => part.type === 'text')
         .map((part) => part.text)
@@ -47,7 +50,8 @@ export function createResponseComposer({ client } = {}) {
               `User request: ${userText}`,
               `Goal: ${plan.goal}`,
               `Plan: ${plan.steps.map((step, index) => `${index + 1}. ${step.title}`).join(' | ')}`,
-              `Stable context: ${sourceTitles}`,
+              `Retrieval route: ${routeMode}`,
+              `Context: ${sourceTitles}`,
             ].join('\n'),
           },
         ],

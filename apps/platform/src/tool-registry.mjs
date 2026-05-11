@@ -3,6 +3,8 @@ import {
   createToolCallResult,
   createToolDefinition,
 } from '../../../packages/contracts/src/index.mjs';
+import { createWikiStore } from './wiki-store.mjs';
+import { createHybridRetrievalRouter } from './retrieval-router.mjs';
 
 export function createToolRegistry() {
   const tools = new Map();
@@ -39,6 +41,31 @@ export function createToolRegistry() {
 }
 
 export function registerDefaultTools(registry) {
+  const wikiStore = createWikiStore();
+  const searchStableDocs = ({ query, personaId }) => {
+    const normalizedQuery = String(query ?? '').toLowerCase();
+    return [
+      {
+        doc_id: 'doc_architecture_overview',
+        title: 'Architecture overview',
+        snippet: `Stable architecture guidance for ${personaId} persona`,
+        score: normalizedQuery.includes('plan') ? 0.96 : 0.88,
+        source_type: 'rag',
+        freshness: 'stable',
+      },
+      {
+        doc_id: 'doc_delivery_loop',
+        title: 'Delivery loop',
+        snippet: 'Plan, retrieve, execute, verify, and report progress.',
+        score: normalizedQuery.includes('review') ? 0.91 : 0.84,
+        source_type: 'rag',
+        freshness: 'stable',
+      },
+    ];
+  };
+  const queryWiki = ({ query }) => wikiStore.query({ query, limit: 2 });
+  const retrievalRouter = createHybridRetrievalRouter({ searchStableDocs, queryWiki });
+
   registry.register(
     {
       tool_name: 'search_docs',
@@ -64,22 +91,9 @@ export function registerDefaultTools(registry) {
       requires_approval: false,
     },
     async (request) => {
-      const query = String(request.arguments.query ?? '').toLowerCase();
+      const query = String(request.arguments.query ?? '');
       const personaId = request.caller.persona_id ?? 'researcher';
-      const items = [
-        {
-          doc_id: 'doc_architecture_overview',
-          title: 'Architecture overview',
-          snippet: `Stable architecture guidance for ${personaId} persona`,
-          score: query.includes('plan') ? 0.96 : 0.88,
-        },
-        {
-          doc_id: 'doc_delivery_loop',
-          title: 'Delivery loop',
-          snippet: 'Plan, retrieve, execute, verify, and report progress.',
-          score: query.includes('review') ? 0.91 : 0.84,
-        },
-      ];
+      const items = searchStableDocs({ query, personaId });
 
       return {
         status: 'success',
@@ -87,6 +101,83 @@ export function registerDefaultTools(registry) {
         result: { items },
         evidence: items.map((item) => ({ doc_id: item.doc_id, title: item.title })),
         metrics: { latency_ms: 12 },
+      };
+    },
+  );
+
+  registry.register(
+    {
+      tool_name: 'query_wiki',
+      description: 'Query the dynamic structured wiki path',
+      permissions: ['read_wiki'],
+      input_schema: {
+        type: 'object',
+        required: ['query'],
+        properties: {
+          query: { type: 'string' },
+        },
+      },
+      output_schema: {
+        type: 'object',
+        properties: {
+          items: { type: 'array' },
+        },
+      },
+      risk_level: 'low',
+      idempotent: true,
+      side_effect_scope: 'none',
+      requires_approval: false,
+    },
+    async (request) => {
+      const query = String(request.arguments.query ?? '');
+      const items = queryWiki({ query });
+
+      return {
+        status: 'success',
+        summary: `Retrieved ${items.length} dynamic wiki entries`,
+        result: { items },
+        evidence: items.map((item) => ({ entry_id: item.entry_id, title: item.title })),
+        metrics: { latency_ms: 8 },
+      };
+    },
+  );
+
+  registry.register(
+    {
+      tool_name: 'hybrid_retrieve',
+      description: 'Route retrieval across stable RAG docs and dynamic wiki entries',
+      permissions: ['read_docs', 'read_wiki'],
+      input_schema: {
+        type: 'object',
+        required: ['query'],
+        properties: {
+          query: { type: 'string' },
+          persona_id: { type: 'string' },
+        },
+      },
+      output_schema: {
+        type: 'object',
+        properties: {
+          route: { type: 'object' },
+          items: { type: 'array' },
+        },
+      },
+      risk_level: 'low',
+      idempotent: true,
+      side_effect_scope: 'none',
+      requires_approval: false,
+    },
+    async (request) => {
+      const query = String(request.arguments.query ?? '');
+      const personaId = request.caller.persona_id ?? 'researcher';
+      const result = retrievalRouter.retrieve({ query, personaId });
+
+      return {
+        status: 'success',
+        summary: `Retrieved ${result.items.length} sources via ${result.route.mode}`,
+        result,
+        evidence: result.citations,
+        metrics: { latency_ms: 16 },
       };
     },
   );

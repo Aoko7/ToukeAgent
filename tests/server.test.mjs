@@ -26,6 +26,7 @@ test('server pipeline builds plan, run state, and stores stream events', async (
   assert.equal(result.task_id, 'trace_test');
   assert.equal(result.persona.persona_id, 'researcher');
   assert.equal(result.plan.steps.length, 3);
+  assert.equal(result.plan.steps[1].tool_name, 'hybrid_retrieve');
   assert.equal(result.run_state.status, 'completed');
   assert.match(result.task_url, /\/api\/tasks\?task_id=/);
   assert.equal(replay[0].event_type, 'start');

@@ -19,7 +19,7 @@ export function createPlanner() {
       const text = extractUserText(message) || 'Handle the inbound request';
       const stepPrefix = message.trace_id.replace(/[^a-zA-Z0-9_-]/g, '_');
       const retrievalObjective = persona.retrieval_policy?.prefer_hybrid_rag
-        ? 'Retrieve stable context from the hybrid RAG path'
+        ? 'Route retrieval across stable docs and dynamic wiki context'
         : 'Retrieve supporting context';
 
       return createAgentPlan({
@@ -28,7 +28,7 @@ export function createPlanner() {
         trace_id: message.trace_id,
         persona_id: persona.persona_id,
         goal: summarizeGoal(text),
-        summary: `Plan the request, retrieve stable context, then respond as ${persona.name}.`,
+        summary: `Plan the request, route context retrieval, then respond as ${persona.name}.`,
         steps: [
           {
             step_id: `${stepPrefix}_understand`,
@@ -39,11 +39,11 @@ export function createPlanner() {
           },
           {
             step_id: `${stepPrefix}_retrieve`,
-            title: 'Retrieve stable context',
+            title: 'Route knowledge retrieval',
             objective: retrievalObjective,
             kind: 'tool',
-            tool_name: 'search_docs',
-            acceptance: ['At least one relevant stable source is retrieved'],
+            tool_name: 'hybrid_retrieve',
+            acceptance: ['At least one relevant source is retrieved from the appropriate path'],
           },
           {
             step_id: `${stepPrefix}_respond`,
