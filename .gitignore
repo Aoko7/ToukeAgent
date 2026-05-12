@@ -3,3 +3,7 @@
 config/*.local.json
 node_modules
 .DS_Store
+data/papers/raw/
+data/papers/cache/
+data/papers/manifests/*.jsonl
+data/papers/manifests/*.json

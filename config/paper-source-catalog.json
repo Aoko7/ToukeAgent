@@ -1,0 +1,217 @@
+{
+  "version": 1,
+  "default_year_range": {
+    "from": 2024,
+    "to": 2025
+  },
+  "topic_profiles": {
+    "all": [],
+    "agent": [
+      "agent",
+      "tool use",
+      "planning",
+      "reasoning",
+      "workflow",
+      "orchestration",
+      "autonomous"
+    ],
+    "rag": [
+      "retrieval",
+      "reranking",
+      "retriever",
+      "indexing",
+      "knowledge",
+      "query"
+    ],
+    "memory": [
+      "memory",
+      "long context",
+      "context window",
+      "compression",
+      "summarization"
+    ],
+    "security": [
+      "security",
+      "privacy",
+      "attack",
+      "defense",
+      "vulnerability",
+      "malware"
+    ]
+  },
+  "conferences": [
+    {
+      "id": "usenix_security",
+      "display_name": "USENIX Security Symposium",
+      "domain": "security",
+      "provider": "usenix",
+      "source_search": "USENIX Security Symposium",
+      "source_searches": [
+        "USENIX Security Symposium",
+        "USENIX Security"
+      ],
+      "technical_sessions_url_template": "https://www.usenix.org/conference/usenixsecurity{yy}/technical-sessions",
+      "homepage_url": "https://www.usenix.org/conference/usenixsecurity24",
+      "expected_source_types": ["conference"]
+    },
+    {
+      "id": "ndss",
+      "display_name": "Network and Distributed System Security Symposium",
+      "domain": "security",
+      "provider": "ndss",
+      "source_search": "Network and Distributed System Security Symposium",
+      "source_searches": [
+        "Network and Distributed System Security Symposium",
+        "NDSS Symposium"
+      ],
+      "accepted_papers_url_template": "https://www.ndss-symposium.org/ndss{year}/accepted-papers/",
+      "homepage_url": "https://www.ndss-symposium.org/ndss2024/accepted-papers/",
+      "expected_source_types": ["conference"]
+    },
+    {
+      "id": "acm_ccs",
+      "display_name": "ACM SIGSAC Conference on Computer and Communications Security",
+      "domain": "security",
+      "provider": "openalex",
+      "source_search": "ACM SIGSAC Conference on Computer and Communications Security",
+      "source_searches": [
+        "ACM SIGSAC Conference on Computer and Communications Security",
+        "ACM CCS"
+      ],
+      "homepage_url": "https://www.sigsac.org/ccs/CCS2024/home.html",
+      "expected_source_types": ["conference", "journal"]
+    },
+    {
+      "id": "ieee_sp",
+      "display_name": "IEEE Symposium on Security and Privacy",
+      "domain": "security",
+      "provider": "openalex",
+      "source_search": "IEEE Symposium on Security and Privacy",
+      "source_searches": [
+        "IEEE Symposium on Security and Privacy",
+        "IEEE S&P"
+      ],
+      "homepage_url": "https://www.ieee-security.org/TC/SP2026/accepted-papers.html",
+      "expected_source_types": ["conference"]
+    },
+    {
+      "id": "iclr",
+      "display_name": "International Conference on Learning Representations",
+      "domain": "ai",
+      "provider": "openalex",
+      "source_search": "International Conference on Learning Representations",
+      "source_searches": [
+        "International Conference on Learning Representations",
+        "ICLR"
+      ],
+      "homepage_url": "https://iclr.cc/FAQ/Proceedings",
+      "expected_source_types": ["conference"]
+    },
+    {
+      "id": "icml",
+      "display_name": "International Conference on Machine Learning",
+      "domain": "ai",
+      "provider": "openalex",
+      "source_search": "International Conference on Machine Learning",
+      "source_searches": [
+        "International Conference on Machine Learning",
+        "ICML"
+      ],
+      "homepage_url": "https://proceedings.mlr.press/",
+      "expected_source_types": ["conference", "journal"]
+    },
+    {
+      "id": "neurips",
+      "display_name": "Neural Information Processing Systems",
+      "domain": "ai",
+      "provider": "openalex",
+      "source_search": "Neural Information Processing Systems",
+      "source_searches": [
+        "Neural Information Processing Systems",
+        "NeurIPS"
+      ],
+      "homepage_url": "https://papers.neurips.cc/",
+      "expected_source_types": ["conference"]
+    },
+    {
+      "id": "acl",
+      "display_name": "Annual Meeting of the Association for Computational Linguistics",
+      "domain": "ai",
+      "provider": "acl_anthology",
+      "source_search": "Annual Meeting of the Association for Computational Linguistics",
+      "source_searches": [
+        "Annual Meeting of the Association for Computational Linguistics",
+        "ACL Anthology",
+        "ACL"
+      ],
+      "anthology_volumes_by_year": {
+        "2024": ["2024.acl-long", "2024.acl-short"],
+        "2025": ["2025.acl-long", "2025.acl-short"]
+      },
+      "homepage_url": "https://aclanthology.org/",
+      "expected_source_types": ["conference"]
+    },
+    {
+      "id": "emnlp",
+      "display_name": "Conference on Empirical Methods in Natural Language Processing",
+      "domain": "ai",
+      "provider": "acl_anthology",
+      "source_search": "Conference on Empirical Methods in Natural Language Processing",
+      "source_searches": [
+        "Conference on Empirical Methods in Natural Language Processing",
+        "EMNLP",
+        "ACL Anthology"
+      ],
+      "anthology_volumes_by_year": {
+        "2024": ["2024.emnlp-main"],
+        "2025": ["2025.emnlp-main"]
+      },
+      "homepage_url": "https://aclanthology.org/",
+      "expected_source_types": ["conference"]
+    },
+    {
+      "id": "mlsys",
+      "display_name": "Machine Learning and Systems",
+      "domain": "systems",
+      "provider": "openalex",
+      "source_search": "Machine Learning and Systems",
+      "source_searches": [
+        "Proceedings of Machine Learning and Systems",
+        "Machine Learning and Systems",
+        "MLSys"
+      ],
+      "homepage_url": "https://proceedings.mlsys.org/",
+      "expected_source_types": ["conference", "journal"]
+    },
+    {
+      "id": "osdi",
+      "display_name": "USENIX Symposium on Operating Systems Design and Implementation",
+      "domain": "systems",
+      "provider": "usenix",
+      "source_search": "Operating Systems Design and Implementation",
+      "source_searches": [
+        "Operating Systems Design and Implementation",
+        "USENIX OSDI",
+        "OSDI"
+      ],
+      "technical_sessions_url_template": "https://www.usenix.org/conference/osdi{yy}/technical-sessions",
+      "homepage_url": "https://www.usenix.org/conference/osdi24",
+      "expected_source_types": ["conference"]
+    },
+    {
+      "id": "nsdi",
+      "display_name": "USENIX Symposium on Networked Systems Design and Implementation",
+      "domain": "systems",
+      "provider": "usenix",
+      "source_search": "Networked Systems Design and Implementation",
+      "source_searches": [
+        "Networked Systems Design and Implementation",
+        "USENIX NSDI",
+        "NSDI"
+      ],
+      "technical_sessions_url_template": "https://www.usenix.org/conference/nsdi{yy}/technical-sessions",
+      "homepage_url": "https://www.usenix.org/conference/nsdi24",
+      "expected_source_types": ["conference"]
+    }
+  ]
+}
