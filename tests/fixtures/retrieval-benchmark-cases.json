@@ -1,0 +1,20 @@
+[
+  {
+    "case_id": "mage_deepfake_text",
+    "query": "how does MAGE detect machine-generated deepfake text in the wild and explain ppl cue",
+    "expected_title": "MAGE: Machine-generated Text Detection in the Wild",
+    "manifest_path": "data/papers/manifests/acl-2024-offset0-limit20.jsonl",
+    "difficulty": "hard-negative",
+    "hard_negative_titles": ["PrivLM-Bench: A Multi-level Privacy Evaluation Benchmark for Language Models"],
+    "tags": ["acl", "llm", "detection"]
+  },
+  {
+    "case_id": "evil_twin_prompts",
+    "query": "unintelligible prompts that preserve model behavior",
+    "expected_title": "Prompts have evil twins",
+    "manifest_path": "data/papers/manifests/emnlp-2024-offset0-limit20.jsonl",
+    "difficulty": "standard",
+    "hard_negative_titles": ["“Thinking” Fair and Slow: On the Efficacy of Structured Prompts for Debiasing Language Models"],
+    "tags": ["emnlp", "prompting", "robustness"]
+  }
+]

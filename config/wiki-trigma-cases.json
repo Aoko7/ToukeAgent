@@ -1,0 +1,247 @@
+{
+  "cases": [
+    {
+      "case_id": "wiki_trigma_mainline_map_accept",
+      "payload": {
+        "query": "当前 TriGMA 主线目录状态是什么",
+        "persona_id": "researcher",
+        "stable_items": [
+          {
+            "doc_id": "doc_trigma_arch_1",
+            "chunk_id": "chunk_trigma_arch_1",
+            "title": "TriGMA architecture overview",
+            "source_type": "rag",
+            "freshness": "stable",
+            "text": "Stable architectural overview of TriGMA and its tri-modal design."
+          }
+        ],
+        "dynamic_items": [
+          {
+            "entry_id": "wiki_trigma_mainline_map",
+            "title": "TriGMA mainline map",
+            "summary": "Current public-facing mainline map and bundle boundary snapshot for TriGMA.",
+            "facts": [
+              "The mainline code roots prioritize src, scripts, configs, docs, and reports.",
+              "The clean paper mainline bundle points to perfectTotrain_V6lab transmacro_full.",
+              "The robustness mainline bundle points to perfectTotrain_R1lab.",
+              "ADAPT_Net remains historical lineage rather than the current public mainline."
+            ],
+            "tags": [
+              "trigma",
+              "status",
+              "mainline",
+              "current",
+              "boundary"
+            ],
+            "source_type": "wiki",
+            "freshness": "dynamic",
+            "owner": "trigma_ops",
+            "required_context": [
+              "project_scope",
+              "bundle_scope"
+            ],
+            "retrieval_hints": [
+              "current mainline status",
+              "主线目录",
+              "current bundle map"
+            ],
+            "ttl_seconds": 1209600,
+            "source_of_truth": "TriGMA/README.md | TriGMA/docs/experiment_registry.md",
+            "version": "v2",
+            "metadata": {
+              "entity_id": "trigma_mainline_map"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first",
+        "expected_fallback_applied": false,
+        "expected_recommended_action": "accept",
+        "min_retrieval_score": 0.82,
+        "min_freshness_score": 0.9,
+        "min_contract_coverage_score": 0.9,
+        "min_primary_source_count": 1,
+        "min_dynamic_count": 1,
+        "required_citation_titles": [
+          "TriGMA mainline map"
+        ]
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "trigma_mainline",
+        "language": "zh",
+        "expected_bucket": "trigma_mainline_status",
+        "tags": [
+          "trigma",
+          "status",
+          "mainline"
+        ]
+      }
+    },
+    {
+      "case_id": "wiki_trigma_workspace_leaderboard_accept",
+      "payload": {
+        "query": "当前 workspace_raw 主线排行状态是什么",
+        "persona_id": "researcher",
+        "stable_items": [
+          {
+            "doc_id": "doc_trigma_eval_1",
+            "chunk_id": "chunk_trigma_eval_1",
+            "title": "TriGMA evaluation background",
+            "source_type": "rag",
+            "freshness": "stable",
+            "text": "Stable explanation of evaluation metrics and seed averaging for TriGMA."
+          }
+        ],
+        "dynamic_items": [
+          {
+            "entry_id": "wiki_trigma_workspace_raw_leaderboard_status",
+            "title": "TriGMA workspace_raw leaderboard status",
+            "summary": "Current canonical workspace_raw leaderboard snapshot for TriGMA.",
+            "facts": [
+              "trigma_tri_modal_nomhsa_seed42 currently tops test F1 at 0.9352.",
+              "trigma_tri_modal_nogate_seed42 currently leads test accuracy at 0.9354 and test F1 at 0.9351.",
+              "trigma_dual_micro_macro_seed42 remains a strong dual-modal baseline close to the mainline.",
+              "The current snapshot covers 54 completed experiments, including 30 workspace_raw runs."
+            ],
+            "tags": [
+              "trigma",
+              "status",
+              "leaderboard",
+              "workspace_raw",
+              "current"
+            ],
+            "source_type": "wiki",
+            "freshness": "dynamic",
+            "owner": "trigma_ops",
+            "required_context": [
+              "project_scope",
+              "leaderboard_scope"
+            ],
+            "retrieval_hints": [
+              "current workspace_raw leaderboard",
+              "当前排行状态",
+              "current leaderboard status"
+            ],
+            "ttl_seconds": 1209600,
+            "source_of_truth": "TriGMA/data/downstream_dataset/perfectTotrain_V6lab/transmacro_full/docs/2026-03-29-v5lab-completed-experiments-leaderboard.md",
+            "version": "v2",
+            "metadata": {
+              "entity_id": "trigma_workspace_raw_leaderboard"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first",
+        "expected_fallback_applied": false,
+        "expected_recommended_action": "accept",
+        "min_retrieval_score": 0.82,
+        "min_freshness_score": 0.9,
+        "min_contract_coverage_score": 0.9,
+        "min_primary_source_count": 1,
+        "min_dynamic_count": 1,
+        "required_citation_titles": [
+          "TriGMA workspace_raw leaderboard status"
+        ]
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "trigma_workspace_leaderboard",
+        "language": "zh",
+        "expected_bucket": "trigma_leaderboard_status",
+        "tags": [
+          "trigma",
+          "status",
+          "leaderboard"
+        ]
+      }
+    },
+    {
+      "case_id": "wiki_trigma_gate_status_accept",
+      "payload": {
+        "query": "当前 gate 量化证据状态是什么",
+        "persona_id": "researcher",
+        "stable_items": [
+          {
+            "doc_id": "doc_trigma_gate_1",
+            "chunk_id": "chunk_trigma_gate_1",
+            "title": "TriGMA gate method background",
+            "source_type": "rag",
+            "freshness": "stable",
+            "text": "Stable explanation of dynamic gate semantics and modality complementarity."
+          }
+        ],
+        "dynamic_items": [
+          {
+            "entry_id": "wiki_trigma_gate_distribution_status",
+            "title": "TriGMA gate distribution status",
+            "summary": "Current gate distribution and confidence-alignment snapshot for TriGMA.",
+            "facts": [
+              "full seed42 gate means are micro 0.4039, meso 0.1429, and macro 0.4532.",
+              "macro dominant share is 0.7266 while meso dominant share is 0.0038.",
+              "the no-gate control keeps all three modalities at 0.3333 with dominant tie rate 1.0000.",
+              "low-confidence 20 percent error rate is 0.2658 while high-confidence 20 percent error rate is 0.0127."
+            ],
+            "tags": [
+              "trigma",
+              "status",
+              "gate",
+              "confidence",
+              "current"
+            ],
+            "source_type": "wiki",
+            "freshness": "dynamic",
+            "owner": "trigma_ops",
+            "required_context": [
+              "project_scope",
+              "gate_scope"
+            ],
+            "retrieval_hints": [
+              "current gate status",
+              "gate distribution",
+              "当前 gate 状态"
+            ],
+            "ttl_seconds": 1209600,
+            "source_of_truth": "TriGMA/reports/issue04/gate_quantitative_evidence.md",
+            "version": "v2",
+            "metadata": {
+              "entity_id": "trigma_gate_distribution"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first",
+        "expected_fallback_applied": false,
+        "expected_recommended_action": "accept",
+        "min_retrieval_score": 0.82,
+        "min_freshness_score": 0.9,
+        "min_contract_coverage_score": 0.9,
+        "min_primary_source_count": 1,
+        "min_dynamic_count": 1,
+        "required_citation_titles": [
+          "TriGMA gate distribution status"
+        ]
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "trigma_gate_status",
+        "language": "zh",
+        "expected_bucket": "trigma_gate_status",
+        "tags": [
+          "trigma",
+          "status",
+          "gate"
+        ]
+      }
+    }
+  ]
+}

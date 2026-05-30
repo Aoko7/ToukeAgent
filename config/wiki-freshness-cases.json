@@ -1,0 +1,242 @@
+{
+  "cases": [
+    {
+      "case_id": "wiki_dynamic_fresh_accept",
+      "payload": {
+        "query": "请告诉我最新版本和价格状态",
+        "persona_id": "researcher",
+        "stable_items": [
+          {
+            "doc_id": "doc_arch",
+            "chunk_id": "chunk_arch_1",
+            "title": "Architecture overview",
+            "source_type": "rag",
+            "freshness": "stable",
+            "text": "Architecture excerpt for background context."
+          }
+        ],
+        "dynamic_items": [
+          {
+            "entry_id": "wiki_deepseek_provider",
+            "title": "DeepSeek provider profile",
+            "summary": "This note tracks the freshest provider pricing and version status.",
+            "facts": [
+              "Treat pricing, model availability, and release metadata as dynamic facts.",
+              "Prefer the wiki path when the request asks for versions, pricing, or current provider status."
+            ],
+            "source_type": "wiki",
+            "freshness": "dynamic",
+            "owner": "wiki_ops",
+            "required_context": [
+              "provider_name"
+            ],
+            "retrieval_hints": [
+              "latest version",
+              "pricing status"
+            ],
+            "ttl_seconds": 3600,
+            "source_of_truth": "smoke_markdown_note",
+            "version": "v2"
+          }
+        ]
+      },
+      "reference": {
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first",
+        "expected_fallback_applied": false,
+        "expected_recommended_action": "accept",
+        "min_retrieval_score": 0.8,
+        "min_freshness_score": 0.9,
+        "min_contract_coverage_score": 0.9,
+        "min_primary_source_count": 1,
+        "min_dynamic_count": 1,
+        "required_citation_titles": [
+          "DeepSeek provider profile"
+        ]
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "pricing",
+        "language": "zh",
+        "expected_bucket": "fresh_dynamic",
+        "tags": [
+          "freshness",
+          "accept"
+        ]
+      }
+    },
+    {
+      "case_id": "wiki_first_fallback_to_rag",
+      "payload": {
+        "query": "请告诉我最新版本和价格状态",
+        "persona_id": "researcher",
+        "stable_items": [
+          {
+            "doc_id": "doc_status_1",
+            "chunk_id": "chunk_status_1",
+            "title": "Provider release notes",
+            "source_type": "rag",
+            "freshness": "stable",
+            "text": "Release notes archive covering versions and pricing history."
+          }
+        ],
+        "dynamic_items": []
+      },
+      "reference": {
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "rag-first",
+        "expected_fallback_applied": true,
+        "expected_recommended_action": "supplement_wiki",
+        "min_retrieval_score": 0.75,
+        "min_freshness_score": 0.9,
+        "min_contract_coverage_score": 0.9,
+        "min_primary_source_count": 1,
+        "max_dynamic_count": 0,
+        "required_citation_titles": [
+          "Provider release notes"
+        ]
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "fallback",
+        "language": "zh",
+        "expected_bucket": "fallback_to_rag",
+        "tags": [
+          "fallback"
+        ]
+      }
+    },
+    {
+      "case_id": "wiki_stale_dynamic_needs_supplement",
+      "payload": {
+        "query": "请告诉我最新版本和价格状态",
+        "persona_id": "researcher",
+        "stable_items": [
+          {
+            "doc_id": "doc_arch_2",
+            "chunk_id": "chunk_arch_2",
+            "title": "Delivery loop",
+            "source_type": "rag",
+            "freshness": "stable",
+            "text": "Stable delivery workflow background."
+          }
+        ],
+        "dynamic_items": [
+          {
+            "entry_id": "wiki_old_provider_state",
+            "title": "Provider status snapshot",
+            "summary": "Historical provider status snapshot.",
+            "facts": [
+              "This wiki snapshot may lag behind the latest provider state."
+            ],
+            "source_type": "wiki",
+            "freshness": "historical",
+            "owner": "wiki_ops",
+            "required_context": [
+              "provider_name"
+            ],
+            "retrieval_hints": [
+              "version status",
+              "pricing status"
+            ],
+            "ttl_seconds": 3600,
+            "source_of_truth": "historical_status_note",
+            "version": "v1"
+          }
+        ]
+      },
+      "reference": {
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first",
+        "expected_fallback_applied": false,
+        "expected_recommended_action": "supplement_rag",
+        "min_retrieval_score": 0.7,
+        "max_retrieval_score": 0.82,
+        "max_freshness_score": 0.6,
+        "min_contract_coverage_score": 0.9,
+        "min_primary_source_count": 1,
+        "min_dynamic_count": 1,
+        "required_citation_titles": [
+          "Provider status snapshot"
+        ]
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "stale_dynamic",
+        "language": "zh",
+        "expected_bucket": "historical_dynamic",
+        "tags": [
+          "freshness",
+          "stale"
+        ]
+      }
+    },
+    {
+      "case_id": "rag_first_architecture_boundary",
+      "payload": {
+        "query": "Explain the architecture and delivery loop",
+        "persona_id": "researcher",
+        "stable_items": [
+          {
+            "doc_id": "doc_arch_3",
+            "chunk_id": "chunk_arch_3",
+            "title": "Architecture overview",
+            "source_type": "rag",
+            "freshness": "stable",
+            "text": "Architecture explanation and delivery loop details."
+          }
+        ],
+        "dynamic_items": [
+          {
+            "entry_id": "wiki_provider_status_shadow",
+            "title": "Provider status shadow",
+            "summary": "Dynamic provider status.",
+            "facts": [
+              "Pricing and version facts live here."
+            ],
+            "source_type": "wiki",
+            "freshness": "dynamic",
+            "owner": "wiki_ops",
+            "required_context": [
+              "provider_name"
+            ],
+            "retrieval_hints": [
+              "pricing",
+              "version"
+            ],
+            "ttl_seconds": 3600,
+            "source_of_truth": "provider_wiki",
+            "version": "v3"
+          }
+        ]
+      },
+      "reference": {
+        "expected_route_mode": "rag-first",
+        "expected_effective_mode": "rag-first",
+        "expected_fallback_applied": false,
+        "expected_recommended_action": "accept",
+        "min_retrieval_score": 0.8,
+        "min_freshness_score": 0.9,
+        "min_contract_coverage_score": 0.9,
+        "min_primary_source_count": 1,
+        "min_dynamic_count": 1,
+        "required_citation_titles": [
+          "Architecture overview"
+        ]
+      },
+      "metadata": {
+        "domain": "rag",
+        "route_family": "rag-first",
+        "topic": "architecture",
+        "language": "en",
+        "expected_bucket": "stable_boundary",
+        "tags": [
+          "boundary"
+        ]
+      }
+    }
+  ]
+}

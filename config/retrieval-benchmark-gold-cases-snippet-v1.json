@@ -1,0 +1,93 @@
+[
+  {
+    "case_id": "quantized_side_tuning",
+    "expected_doc_id": "paper::acl::2024::quantized-side-tuning-fast-and-memory-efficient-tuning-of-quantized-large-language-models",
+    "required_supports": [
+      {
+        "label": "qst_conclusion_summary",
+        "section_any_of": ["conclusion"],
+        "snippet_any_of": ["dual-stage process", "4-bit", "memory-efficient finetuning framework"]
+      }
+    ]
+  },
+  {
+    "case_id": "mage_deepfake_text",
+    "expected_doc_id": "paper::acl::2024::mage-machine-generated-text-detection-in-the-wild",
+    "required_supports": [
+      {
+        "label": "mage_intro_scope",
+        "section_any_of": ["introduction"],
+        "snippet_any_of": ["specific domains", "deepfake texts"]
+      },
+      {
+        "label": "mage_perplexity_bias",
+        "section_any_of": ["analysis"],
+        "snippet_any_of": ["perplexity", "human-written texts"]
+      }
+    ]
+  },
+  {
+    "case_id": "privlm_privacy_benchmark",
+    "expected_doc_id": "paper::acl::2024::privlm-bench-a-multi-level-privacy-evaluation-benchmark-for-language-models",
+    "required_supports": [
+      {
+        "label": "privlm_privacy_tradeoff",
+        "section_any_of": ["introduction"],
+        "snippet_any_of": ["privacy-utility trade-off", "fairly quantify"]
+      },
+      {
+        "label": "privlm_conclusion_limits",
+        "section_any_of": ["conclusion"],
+        "snippet_any_of": ["adversarial standpoint", "proposed attacks", "limitations"]
+      }
+    ]
+  },
+  {
+    "case_id": "evil_twin_prompts",
+    "expected_doc_id": "paper::emnlp::2024::prompts-have-evil-twins",
+    "required_supports": [
+      {
+        "label": "evil_twin_definition",
+        "section_any_of": ["abstract", "introduction"],
+        "snippet_any_of": ["unintelligible to humans", "evil twins", "functionally similar"]
+      },
+      {
+        "label": "transfer_or_robustness",
+        "section_any_of": ["our contributions", "introduction"],
+        "snippet_any_of": ["transfer", "robustness", "maximum-likelihood"]
+      }
+    ]
+  },
+  {
+    "case_id": "fizz_consistency",
+    "expected_doc_id": "paper::emnlp::2024::fizz-factual-inconsistency-detection-by-zoom-in-summary-and-zoom-out-document",
+    "required_supports": [
+      {
+        "label": "fizz_related_work_prompting",
+        "section_any_of": ["related work"],
+        "snippet_any_of": ["zero-shot prompting", "chatgpt", "excluding"]
+      },
+      {
+        "label": "fizz_atomic_fact_scoring",
+        "section_any_of": ["atomic facts scoring"],
+        "snippet_any_of": ["assign scores", "maximum entailment score", "atomic fact"]
+      }
+    ]
+  },
+  {
+    "case_id": "tableqa_indic_languages",
+    "expected_doc_id": "paper::emnlp::2024::table-question-answering-for-low-resourced-indic-languages",
+    "required_supports": [
+      {
+        "label": "tableqa_intro_gap",
+        "section_any_of": ["introduction"],
+        "snippet_any_of": ["data scarcity", "cultural facts"]
+      },
+      {
+        "label": "tableqa_answer_table_extraction",
+        "section_any_of": ["answer table extraction"],
+        "snippet_any_of": ["code-mixed sql queries", "low-resourced wikipedia tables"]
+      }
+    ]
+  }
+]

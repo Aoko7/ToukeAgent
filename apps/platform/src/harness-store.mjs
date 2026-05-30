@@ -10,6 +10,7 @@ export function createHarnessStore() {
   function create(record = {}) {
     const run = {
       run_id: record.run_id ?? `harness_${randomUUID()}`,
+      harness_type: record.harness_type ?? 'task',
       status: record.status ?? 'completed',
       created_at: record.created_at ?? new Date().toISOString(),
       completed_at: record.completed_at ?? new Date().toISOString(),
@@ -17,6 +18,7 @@ export function createHarnessStore() {
       summary: clone(record.summary ?? {}),
       metrics: clone(record.metrics ?? {}),
       cases: clone(record.cases ?? []),
+      artifacts: clone(record.artifacts ?? {}),
     };
     runs.set(run.run_id, run);
     return clone(run);
@@ -27,8 +29,11 @@ export function createHarnessStore() {
     return run ? clone(run) : null;
   }
 
-  function list() {
-    return Array.from(runs.values()).map((run) => clone(run));
+  function list(options = {}) {
+    const harnessType = options.harnessType ?? null;
+    return Array.from(runs.values())
+      .filter((run) => (harnessType ? run.harness_type === harnessType : true))
+      .map((run) => clone(run));
   }
 
   return {

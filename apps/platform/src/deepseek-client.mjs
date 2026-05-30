@@ -10,7 +10,7 @@ export function createDeepSeekClient({
   fetchImpl = globalThis.fetch,
 } = {}) {
   const hasExplicitOverrides = apiKey !== undefined || baseUrl !== undefined || model !== undefined || reasoningEffort !== undefined;
-  const modelConfig = hasExplicitOverrides ? null : loadModelConfig({ configPath, env });
+  const modelConfig = loadModelConfig({ configPath, env });
   const deepseekConfig = modelConfig?.deepseek ?? {};
   const resolvedApiKey = apiKey ?? deepseekConfig.apiKey ?? env.DEEPSEEK_API_KEY ?? null;
   const resolvedBaseUrl = baseUrl ?? deepseekConfig.baseUrl ?? env.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com';
@@ -19,6 +19,7 @@ export function createDeepSeekClient({
 
   async function chat({
     messages,
+    model = resolvedModel,
     stream = false,
     thinking = { type: 'enabled' },
     reasoningEffort = resolvedReasoningEffort,
@@ -37,7 +38,7 @@ export function createDeepSeekClient({
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: resolvedModel,
+        model,
         messages,
         stream,
         thinking,
@@ -58,7 +59,7 @@ export function createDeepSeekClient({
     const message = choice.message ?? {};
 
     return {
-      model: data.model ?? resolvedModel,
+      model: data.model ?? model,
       content: message.content ?? '',
       reasoning_content: message.reasoning_content ?? null,
       usage: data.usage ?? null,
@@ -67,11 +68,13 @@ export function createDeepSeekClient({
   }
 
   return {
+    providerId: 'deepseek',
     baseUrl: resolvedBaseUrl,
     model: resolvedModel,
     reasoningEffort: resolvedReasoningEffort,
     configPath: modelConfig?.configPath ?? configPath ?? null,
     configSource: hasExplicitOverrides ? 'explicit' : modelConfig?.source ?? 'env',
+    routingConfig: modelConfig?.routing ?? null,
     isConfigured: Boolean(resolvedApiKey),
     chat,
   };

@@ -1,0 +1,129 @@
+{
+  "cases": [
+    {
+      "case_id": "fido2_local_attacks",
+      "query": "local attacker analysis against fido2 passkeys and usability tradeoffs",
+      "expected_title": "A Security and Usability Analysis of Local Attacks Against FIDO2",
+      "manifest_path": "data/papers/manifests/ndss-2024.jsonl",
+      "tags": ["ndss", "authentication", "fido2"]
+    },
+    {
+      "case_id": "machine_unlearning_services",
+      "query": "vulnerabilities in machine unlearning services and assurance claims",
+      "expected_title": "A Duty to Forget, a Right to be Assured? Exposing Vulnerabilities in Machine Unlearning Services",
+      "manifest_path": "data/papers/manifests/ndss-2024.jsonl",
+      "tags": ["ndss", "ml-security", "unlearning"]
+    },
+    {
+      "case_id": "machine_unlearning_benchmark_tables",
+      "query": "over-unlearning utility privacy tradeoff benchmark datasets cifar stl model architectures approximate unlearning",
+      "expected_title": "A Duty to Forget, a Right to be Assured? Exposing Vulnerabilities in Machine Unlearning Services",
+      "manifest_path": "data/papers/manifests/ndss-2024.jsonl",
+      "tags": ["ndss", "ml-security", "unlearning", "noise-target", "tables"],
+      "note": "Targets benchmark and tradeoff result sections that previously leaked glyph noise."
+    },
+    {
+      "case_id": "android_update_support",
+      "query": "device-centric study of android security update support fragmentation",
+      "expected_title": "50 Shades of Support: A Device-Centric Analysis of Android Security Updates",
+      "manifest_path": "data/papers/manifests/ndss-2024.jsonl",
+      "tags": ["ndss", "android", "measurement"]
+    },
+    {
+      "case_id": "android_update_rollout_charts",
+      "query": "monthly quarterly biannual android security patch rollout by oem carrier country support lifecycle",
+      "expected_title": "50 Shades of Support: A Device-Centric Analysis of Android Security Updates",
+      "manifest_path": "data/papers/manifests/ndss-2024.jsonl",
+      "tags": ["ndss", "android", "measurement", "noise-target", "charts"],
+      "note": "Targets chart-heavy rollout and support-type result sections."
+    },
+    {
+      "case_id": "oran_layer3_detection",
+      "query": "o-ran compliant layer-3 cellular attack detection service",
+      "expected_title": "5G-Spector: An O-RAN Compliant Layer-3 Cellular Attack Detection Service",
+      "manifest_path": "data/papers/manifests/ndss-2024.jsonl",
+      "tags": ["ndss", "cellular", "oran", "detection"]
+    },
+    {
+      "case_id": "oran_layer3_performance_tables",
+      "query": "mobiflow mobiexpert throughput latency memory overhead unknown attacks cellular traces o-ran xapp",
+      "expected_title": "5G-Spector: An O-RAN Compliant Layer-3 Cellular Attack Detection Service",
+      "manifest_path": "data/papers/manifests/ndss-2024.jsonl",
+      "tags": ["ndss", "cellular", "oran", "noise-target", "tables"],
+      "note": "Targets metric-heavy performance and scalability result chunks."
+    },
+    {
+      "case_id": "wireguard_symbolic_analysis",
+      "query": "unified symbolic analysis of the wireguard protocol",
+      "expected_title": "A Unified Symbolic Analysis of WireGuard",
+      "manifest_path": "data/papers/manifests/ndss-2024.jsonl",
+      "tags": ["ndss", "wireguard", "formal-analysis"]
+    },
+    {
+      "case_id": "pakistani_creators_safety",
+      "query": "digital threats and security practices of Pakistani content creators",
+      "expected_title": "\"I chose to fight, be brave, and to deal with it\": Threat Experiences and Security Practices of Pakistani Content Creators",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "tags": ["usenix_security", "safety", "creators"]
+    },
+    {
+      "case_id": "onlyfans_creator_threats",
+      "query": "digital threat model and safety practices of onlyfans creators",
+      "expected_title": "\"I feel physically safe but not politically safe\": Understanding the Digital Threats and Safety Practices of {OnlyFans} Creators",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "tags": ["usenix_security", "safety", "onlyfans"]
+    },
+    {
+      "case_id": "reddit_mod_admin_abuse",
+      "query": "moderation power dynamics and feature misuse in combating hate on reddit",
+      "expected_title": "Investigating Moderation Challenges to Combating Hate and Harassment: The Case of {Mod-Admin} Power Dynamics and Feature Misuse on Reddit",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "tags": ["usenix_security", "reddit", "moderation"]
+    },
+    {
+      "case_id": "attackgnn_red_team",
+      "query": "reinforcement learning red teaming of graph neural networks for hardware security",
+      "expected_title": "{AttackGNN}: {Red-Teaming} {GNNs} in Hardware Security Using Reinforcement Learning",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "tags": ["usenix_security", "hardware-security", "reinforcement-learning"]
+    },
+    {
+      "case_id": "attackgnn_results_tables",
+      "query": "ip piracy hardware trojan localization reverse engineering hardware obfuscation 100 percent success rate adversarial circuits",
+      "expected_title": "{AttackGNN}: {Red-Teaming} {GNNs} in Hardware Security Using Reinforcement Learning",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "tags": ["usenix_security", "hardware-security", "noise-target", "tables"],
+      "note": "Targets task-by-task success-rate result tables."
+    },
+    {
+      "case_id": "insight_key_prediction_tables",
+      "query": "logic locking key prediction accuracy oracle-less scan access iscas-85 itc-99 synopsys testmax insight",
+      "expected_title": "{INSIGHT}: Attacking {Industry-Adopted} Learning Resilient Logic Locking Techniques Using Explainable Graph Neural Network",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "tags": ["usenix_security", "hardware-security", "logic-locking", "noise-target", "tables"],
+      "note": "Targets accuracy and case-study sections with dense metric blocks."
+    },
+    {
+      "case_id": "thermal_trojan_noise_maps",
+      "query": "thermal radiation map noise pixel occupation enhancement nice hardware trojan detection",
+      "expected_title": "Improving the Ability of Thermal Radiation Based Hardware Trojan Detection",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "tags": ["usenix_security", "hardware-security", "thermal", "noise-target", "figures"],
+      "note": "Targets thermal-map and pixel-occupation figure-heavy sections."
+    },
+    {
+      "case_id": "spy_camera_em_radiation",
+      "query": "long-range hidden spy camera detection using electromagnetic radiation signatures",
+      "expected_title": "Eye of Sauron: {Long-Range} Hidden Spy Camera Detection and Positioning with Inbuilt Memory {EM} Radiation",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "tags": ["usenix_security", "privacy", "hardware", "detection"]
+    },
+    {
+      "case_id": "image_based_abuse_protection",
+      "query": "proactive protection against image-based sexual abuse in digital intimacy",
+      "expected_title": "\"Did They {F***ing} Consent to That?\": Safer Digital Intimacy via Proactive Protection Against {Image-Based} Sexual Abuse",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "tags": ["usenix_security", "safety", "image-abuse"]
+    }
+  ]
+}

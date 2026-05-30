@@ -16,6 +16,8 @@ export function createPlanStep(input) {
     kind: asString(step.kind ?? 'reason', 'kind'),
     status,
     tool_name: asOptionalString(step.tool_name, 'tool_name'),
+    arguments: asObject(step.arguments, 'arguments', {}),
+    network_intent: asObject(step.network_intent, 'network_intent', {}),
     acceptance: asArray(step.acceptance, 'acceptance', []).map((item) => asString(item, 'acceptance item')),
     metadata: asObject(step.metadata, 'metadata', {}),
   };

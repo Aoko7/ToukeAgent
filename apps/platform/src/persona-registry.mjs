@@ -1,53 +1,43 @@
 import { createPersonaProfile } from '../../../packages/contracts/src/index.mjs';
+import { callPythonCore } from './python-core-bridge.mjs';
 
-const DEFAULT_PERSONAS = [
-  {
-    persona_id: 'researcher',
-    name: 'Researcher',
-    purpose: 'Decompose requests, gather context, and produce structured plans',
-    style: { tone: 'analytical', verbosity: 'medium' },
-    boundaries: ['do_not_invent_sources'],
-    preferred_tools: ['search_docs'],
-    retrieval_policy: { prefer_hybrid_rag: true },
-    model_policy: { tier: 'high_reasoning' },
-    approval_policy: { required_for_side_effects: true },
-  },
-  {
-    persona_id: 'reviewer',
-    name: 'Reviewer',
-    purpose: 'Prioritize risks, gaps, regressions, and missing tests',
-    style: { tone: 'direct', verbosity: 'medium' },
-    boundaries: ['do_not_hide_risk'],
-    preferred_tools: ['search_docs'],
-    retrieval_policy: { prefer_hybrid_rag: true },
-    model_policy: { tier: 'high_reasoning' },
-    approval_policy: { required_for_side_effects: true },
-  },
-  {
-    persona_id: 'operator',
-    name: 'Operator',
-    purpose: 'Execute procedural steps and report progress clearly',
-    style: { tone: 'steady', verbosity: 'low' },
-    boundaries: ['do_not_skip_verification'],
-    preferred_tools: ['search_docs'],
-    retrieval_policy: { prefer_hybrid_rag: true },
-    model_policy: { tier: 'balanced' },
-    approval_policy: { required_for_side_effects: true },
-  },
-];
-
-export function createPersonaRegistry(personas = DEFAULT_PERSONAS) {
-  const map = new Map(personas.map((persona) => {
-    const normalized = createPersonaProfile(persona);
-    return [normalized.persona_id, normalized];
-  }));
+export function createPersonaRegistry(personas = null) {
+  const catalog = callPythonCore('describe_persona_catalog', {
+    personas: Array.isArray(personas) && personas.length > 0 ? personas : null,
+  });
+  const resolved = (catalog.personas ?? []).map((persona) => createPersonaProfile(persona));
+  const map = new Map(resolved.map((persona) => [persona.persona_id, persona]));
+  const toolsets = Array.isArray(catalog.toolsets) ? structuredClone(catalog.toolsets) : [];
 
   return {
     get(personaId = 'researcher') {
-      return map.get(personaId) ?? map.get('researcher');
+      const persona = map.get(personaId);
+      if (persona) {
+        return persona;
+      }
+
+      return createPersonaProfile(callPythonCore('resolve_persona', {
+        persona_id: personaId,
+        personas: Array.from(map.values()),
+        packs: catalog.packs ?? [],
+      }));
     },
     list() {
       return Array.from(map.values());
+    },
+    packs() {
+      return Array.isArray(catalog.packs) ? structuredClone(catalog.packs) : [];
+    },
+    toolsets() {
+      return structuredClone(toolsets);
+    },
+    catalog() {
+      return {
+        default_persona_id: catalog.default_persona_id ?? 'researcher',
+        packs: Array.isArray(catalog.packs) ? structuredClone(catalog.packs) : [],
+        personas: Array.from(map.values()),
+        toolsets: structuredClone(toolsets),
+      };
     },
   };
 }

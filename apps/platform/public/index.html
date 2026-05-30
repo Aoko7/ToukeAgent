@@ -1,78 +1,1008 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>ToukeAgent</title>
+    <title>ToukeAgent Console</title>
     <style>
-      :root { color-scheme: dark; font-family: ui-sans-serif, system-ui, sans-serif; }
-      body { margin: 0; background: #0f1115; color: #e5e7eb; }
-      main { max-width: 1100px; margin: 0 auto; padding: 24px; display: grid; gap: 16px; }
-      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-      .panel { border: 1px solid #263042; border-radius: 10px; padding: 16px; background: #151a22; }
-      label { display: grid; gap: 6px; margin-bottom: 12px; }
-      input, textarea, button, select {
-        font: inherit; color: inherit; background: #0f1420; border: 1px solid #2b3446; border-radius: 8px; padding: 10px 12px;
+      :root {
+        color-scheme: dark;
+        --bg: #0b0f14;
+        --panel: #101722;
+        --panel-2: #0f1620;
+        --line: #253043;
+        --line-strong: #405068;
+        --text: #e8edf3;
+        --muted: #8d9bb0;
+        --accent: #7dd3fc;
+        --accent-2: #f59e0b;
+        --good: #34d399;
+        --warn: #fbbf24;
+        --bad: #f87171;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
-      textarea { min-height: 120px; resize: vertical; }
-      button { cursor: pointer; }
-      pre { white-space: pre-wrap; word-break: break-word; margin: 0; min-height: 240px; }
-      .muted { color: #9ca3af; font-size: 12px; }
-      .events { display: grid; gap: 8px; }
-      .event { border: 1px solid #2b3446; border-radius: 8px; padding: 10px 12px; background: #0f1420; }
-      .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #243041; font-size: 12px; margin-right: 8px; }
+
+      * { box-sizing: border-box; }
+      html, body { min-height: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      button, input, textarea, select {
+        font: inherit;
+        color: inherit;
+      }
+
+      button, input, textarea, select {
+        border: 1px solid var(--line);
+        background: #0e1520;
+        border-radius: 8px;
+        padding: 10px 12px;
+      }
+
+      button {
+        cursor: pointer;
+        transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
+      }
+
+      button:hover { border-color: var(--line-strong); }
+      button[data-active="true"] {
+        background: #182538;
+        border-color: var(--accent);
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 126px;
+      }
+
+      pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 12px;
+        line-height: 1.5;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      }
+
+      .console {
+        min-height: 100vh;
+        display: grid;
+        gap: 16px;
+        padding: 16px;
+      }
+
+      .band, .panel {
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(20, 27, 38, 0.95), rgba(14, 20, 30, 0.95));
+        border-radius: 8px;
+      }
+
+      .band {
+        padding: 16px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: end;
+        flex-wrap: wrap;
+      }
+
+      .title {
+        display: grid;
+        gap: 6px;
+      }
+
+      h1, h2, h3 {
+        margin: 0;
+        line-height: 1.1;
+      }
+
+      h1 { font-size: 24px; }
+      h2 { font-size: 16px; }
+      h3 { font-size: 13px; }
+
+      .muted { color: var(--muted); }
+      .tiny { font-size: 12px; }
+
+      .meta-row, .chip-row, .segmented, .toolbar, .tabbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .meta-row {
+        align-items: center;
+        justify-content: flex-end;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #0d1420;
+        font-size: 12px;
+      }
+
+      .chip strong {
+        font-weight: 600;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(270px, 0.8fr) minmax(0, 1.1fr) minmax(330px, 1fr);
+        gap: 16px;
+        align-items: start;
+      }
+
+      @media (max-width: 1180px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .stack {
+        display: grid;
+        gap: 16px;
+      }
+
+      .panel {
+        padding: 14px;
+      }
+
+      .panel-body {
+        display: grid;
+        gap: 12px;
+        margin-top: 10px;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      @media (max-width: 720px) {
+        .field-row { grid-template-columns: 1fr; }
+      }
+
+      .segmented button,
+      .tabbar button {
+        min-width: 0;
+      }
+
+      .list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .list-item {
+        display: grid;
+        gap: 4px;
+        border: 1px solid var(--line);
+        background: var(--panel-2);
+        border-radius: 8px;
+        padding: 10px 12px;
+      }
+
+      .list-item button {
+        width: 100%;
+        text-align: left;
+        padding: 0;
+        border: 0;
+        background: transparent;
+      }
+
+      .timeline {
+        display: grid;
+        gap: 8px;
+        max-height: 64vh;
+        overflow: auto;
+      }
+
+      .event {
+        display: grid;
+        gap: 6px;
+        border: 1px solid var(--line);
+        background: var(--panel-2);
+        border-radius: 8px;
+        padding: 10px 12px;
+      }
+
+      .event-head {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .event-title {
+        font-weight: 600;
+      }
+
+      .event-body {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #0d1420;
+        font-size: 12px;
+      }
+
+      .status[data-tone="good"] { border-color: rgba(52, 211, 153, 0.5); }
+      .status[data-tone="warn"] { border-color: rgba(251, 191, 36, 0.5); }
+      .status[data-tone="bad"] { border-color: rgba(248, 113, 113, 0.5); }
+
+      .inspector-output {
+        max-height: 64vh;
+        overflow: auto;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #0b111b;
+      }
+
+      .compact-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: var(--panel-2);
+        display: grid;
+        gap: 4px;
+      }
+
+      .metric strong { font-size: 15px; }
+
+      .task-meta {
+        display: grid;
+        gap: 6px;
+      }
+
+      .divider {
+        height: 1px;
+        background: var(--line);
+      }
+
+      .recent-task-link {
+        all: unset;
+        cursor: pointer;
+        display: block;
+      }
+
+      .recent-task-link:hover {
+        color: var(--accent);
+      }
+
+      .list-item button[data-active="true"] {
+        color: var(--accent);
+      }
+
+      .draft-detail {
+        display: grid;
+        gap: 12px;
+      }
+
+      .draft-section {
+        display: grid;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: var(--panel-2);
+      }
+
+      .draft-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .draft-kv {
+        display: grid;
+        gap: 4px;
+      }
+
+      .draft-kv strong,
+      .draft-section strong {
+        font-size: 12px;
+      }
+
+      .draft-kv span,
+      .draft-section span,
+      .draft-section li {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .draft-list {
+        margin: 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 4px;
+      }
+
+      .compare-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .compare-card {
+        display: grid;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: rgba(15, 22, 32, 0.85);
+      }
+
+      .compare-card[data-tone="good"] {
+        border-color: rgba(52, 211, 153, 0.35);
+      }
+
+      .compare-card[data-tone="bad"] {
+        border-color: rgba(248, 113, 113, 0.45);
+      }
+
+      .compare-card-head {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .compare-card-title {
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .compare-values {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .compare-value {
+        display: grid;
+        gap: 4px;
+      }
+
+      .compare-label {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .compare-inline {
+        color: var(--text);
+        font-size: 12px;
+        line-height: 1.5;
+        word-break: break-word;
+      }
+
+      .compare-inline.muted {
+        color: var(--muted);
+      }
+
+      .compare-value pre {
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: #0b111b;
+      }
+
+      .tool-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .tool-section-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .tool-card {
+        display: grid;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: var(--panel-2);
+      }
+
+      .tool-card-title {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        justify-content: space-between;
+      }
+
+      .tool-card-title strong {
+        font-size: 12px;
+      }
+
+      .tool-card-meta,
+      .tool-card-list {
+        display: grid;
+        gap: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .tool-card-list {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      @media (max-width: 720px) {
+        .draft-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .compare-values {
+          grid-template-columns: 1fr;
+        }
+
+        .tool-section-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
-    <main>
-      <section class="panel">
-        <h1>ToukeAgent</h1>
-        <p class="muted">Plan-to-Act + SSE + contract-first runtime</p>
+    <main class="console" id="console-shell">
+      <section class="band">
+        <div class="header">
+          <div class="title">
+            <h1>ToukeAgent Console</h1>
+            <div class="muted tiny">Task-centric ops surface with SSE, trace drill-down, and recovery controls.</div>
+          </div>
+          <div class="meta-row">
+            <div class="status" id="stream-state" data-tone="warn">disconnected</div>
+            <div class="status" id="task-status">idle</div>
+            <div class="status" id="persona-status">researcher</div>
+          </div>
+        </div>
       </section>
-      <section class="row">
-        <div class="panel">
-          <h2>Send Message</h2>
-          <form id="message-form">
+
+      <section class="band">
+        <form id="message-form" class="fields">
+          <div class="field-row">
             <label>
               Workspace
-              <input name="workspace_id" value="ws_demo" />
+              <input id="workspace-id" name="workspace_id" value="ws_demo" />
             </label>
             <label>
-              Trace / Task
-              <input name="trace_id" value="trace_demo_1" />
+              Task / Trace
+              <input id="task-id" name="trace_id" value="trace_demo_1" />
             </label>
+          </div>
+
+          <div class="field-row">
             <label>
-              Persona
-              <select name="persona_hint">
-                <option value="researcher">researcher</option>
-                <option value="reviewer">reviewer</option>
-                <option value="operator">operator</option>
+              Recovery mode
+              <select id="recovery-mode" name="recovery_mode">
+                <option value="resume">resume</option>
+                <option value="restart">restart</option>
               </select>
             </label>
             <label>
-              Message
-              <textarea name="content">请给我一个最小可落地的开发计划。</textarea>
+              Platform persona
+              <input id="persona-hidden" name="persona_hint" value="researcher" type="hidden" />
+              <div class="segmented" id="persona-switcher" role="tablist" aria-label="Persona switcher"></div>
             </label>
-            <button type="submit">Send</button>
-          </form>
-        </div>
-        <div class="panel">
-          <h2>Stream</h2>
+          </div>
+
           <label>
-            Task ID
-            <input id="task-id" value="trace_demo_1" />
+            Message
+            <textarea id="message-content" name="content">请给我一个最小可落地的开发计划。</textarea>
           </label>
-          <button id="connect">Connect</button>
-          <button id="disconnect">Disconnect</button>
-          <div class="muted" id="stream-state">disconnected</div>
-          <pre id="stream-output"></pre>
-        </div>
+
+          <div class="toolbar">
+            <button type="submit" id="send-message">Send</button>
+            <button type="button" id="refresh-task">Refresh Task</button>
+            <button type="button" id="reload-inspector">Refresh Inspector</button>
+            <button type="button" id="export-trace-bundle">Export Trace Bundle</button>
+            <button type="button" id="export-audit-snapshot">Export Audit Snapshot</button>
+            <button type="button" id="replay-task">Replay</button>
+            <button type="button" id="recover-task">Recover</button>
+          </div>
+        </form>
       </section>
-      <section class="panel">
-        <h2>Event Log</h2>
-        <div class="events" id="event-log"></div>
+
+      <section class="layout">
+        <aside class="stack">
+          <article class="panel" id="task-summary">
+            <div class="section-head">
+              <h2>Task Summary</h2>
+              <div class="muted tiny" id="task-ref">trace_demo_1</div>
+            </div>
+            <div class="panel-body">
+              <div class="chip-row" id="task-chips"></div>
+              <div class="task-meta" id="task-meta"></div>
+              <div class="divider"></div>
+              <div>
+                <h3>Recent Tasks</h3>
+                <div class="list" id="task-recent-list"></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="section-head">
+              <h2>Controls</h2>
+            </div>
+            <div class="panel-body">
+              <div class="compact-grid" id="task-actions">
+                <button type="button" id="approve-task">Approve</button>
+                <button type="button" id="takeover-task">Takeover</button>
+                <button type="button" id="load-task">Load</button>
+                <button type="button" id="disconnect-task">Disconnect</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel" id="wiki-management">
+            <div class="section-head">
+              <h2>Wiki</h2>
+              <div class="muted tiny" id="wiki-status">idle</div>
+            </div>
+            <div class="panel-body">
+              <div class="compact-grid">
+                <button type="button" id="refresh-wiki">Refresh Wiki</button>
+                <button type="button" id="load-wiki-entry">Load Entry</button>
+                <button type="button" id="load-wiki-proposal">Load Proposal</button>
+                <button type="button" id="submit-wiki-proposal">Submit Proposal</button>
+                <button type="button" id="import-wiki-markdown">Import Markdown</button>
+                <button type="button" id="approve-wiki-proposal">Approve Proposal</button>
+                <button type="button" id="reject-wiki-proposal">Reject Proposal</button>
+                <button type="button" id="rollback-wiki-entry">Rollback</button>
+                <button type="button" id="refresh-wiki-history">Refresh History</button>
+              </div>
+
+              <div class="fields">
+                <div class="field-row">
+                  <label>
+                    Entry ID
+                    <input id="wiki-entry-id" value="wiki_deepseek_provider" />
+                  </label>
+                  <label>
+                    Proposal ID
+                    <input id="wiki-proposal-id" placeholder="wikp_..." />
+                  </label>
+                </div>
+                <div class="field-row">
+                  <label>
+                    Base Version
+                    <input id="wiki-base-version" type="number" min="1" value="1" />
+                  </label>
+                  <label>
+                    Target Version
+                    <input id="wiki-target-version" type="number" min="1" value="1" />
+                  </label>
+                </div>
+                <div class="field-row">
+                  <label>
+                    Reviewer
+                    <input id="wiki-reviewer-id" value="console_operator" />
+                  </label>
+                  <label>
+                    Merge Strategy
+                    <select id="wiki-merge-strategy">
+                      <option value="replace">replace</option>
+                      <option value="combine">combine</option>
+                    </select>
+                  </label>
+                </div>
+                <label>
+                  Title
+                  <input id="wiki-title" value="DeepSeek provider profile" />
+                </label>
+                <label>
+                  Summary
+                  <textarea id="wiki-summary">Operational notes for the DeepSeek provider.</textarea>
+                </label>
+                <label>
+                  Facts
+                  <textarea id="wiki-facts">Treat pricing, model availability, and release metadata as dynamic facts.</textarea>
+                </label>
+                <label>
+                  Tags
+                  <input id="wiki-tags" value="deepseek,provider,status" />
+                </label>
+                <label>
+                  Query
+                  <input id="wiki-query" value="latest version pricing status" />
+                </label>
+                <label>
+                  Markdown
+                  <textarea id="wiki-markdown-input">---
+entry_id: wiki_markdown_demo
+title: Markdown Demo Entry
+tags: [markdown, demo]
+owner: wiki_ops
+ttl_seconds: 3600
+source_of_truth: local_markdown_demo
+---
+
+# Markdown Demo Entry
+
+## Summary
+This is a markdown-backed wiki entry draft.
+
+## Facts
+- demo fact one
+- demo fact two</textarea>
+                </label>
+              </div>
+
+              <div class="chip-row" id="wiki-summary-chips"></div>
+              <div class="list" id="wiki-entry-list"></div>
+              <div class="list" id="wiki-proposal-list"></div>
+              <div class="list" id="wiki-history-list"></div>
+              <div class="inspector-output">
+                <pre id="wiki-output"></pre>
+              </div>
+            </div>
+          </article>
+        </aside>
+
+        <section class="panel">
+          <div class="section-head">
+            <h2>Live Stream</h2>
+            <div class="muted tiny" id="stream-hint">waiting for task events</div>
+          </div>
+          <div class="panel-body">
+            <div class="timeline" id="stream-timeline"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <h2>Inspector</h2>
+            <div class="muted tiny" id="inspector-hint">task</div>
+          </div>
+          <div class="panel-body">
+            <div class="tabbar" id="inspector-tabs"></div>
+            <div class="chip-row" id="inspector-summary"></div>
+            <div class="fields" id="harness-ops" hidden>
+              <div class="field-row">
+                <label>
+                  Harness Type
+                  <select id="harness-type-filter">
+                    <option value="all">all</option>
+                    <option value="task">task</option>
+                    <option value="memory">memory</option>
+                    <option value="wiki">wiki</option>
+                    <option value="knowledge">knowledge</option>
+                  </select>
+                </label>
+                <label>
+                  Selected Run
+                  <input id="harness-selected-id" readonly placeholder="harness_..." />
+                </label>
+              </div>
+              <div class="toolbar">
+                <button type="button" id="refresh-harness">Refresh Harness</button>
+                <button type="button" id="run-memory-harness">Run Memory Suite</button>
+                <button type="button" id="run-wiki-harness">Run Wiki Suite</button>
+                <button type="button" id="run-knowledge-harness">Run Knowledge Suite</button>
+                <button type="button" id="draft-memory-harness">Draft From Task</button>
+                <button type="button" id="draft-wiki-harness">Draft Wiki From Task</button>
+                <button type="button" id="download-memory-draft">Download Draft</button>
+                <button type="button" id="download-wiki-draft">Download Wiki Draft</button>
+                <button type="button" id="save-memory-draft-case">Save Selected Case</button>
+                <button type="button" id="save-wiki-draft-case">Save Wiki Draft</button>
+                <button type="button" id="promote-memory-draft-case">Promote To Suite</button>
+                <button type="button" id="promote-wiki-draft-case">Promote Wiki Draft</button>
+                <button type="button" id="refresh-memory-candidate-suites">Refresh Suites</button>
+                <button type="button" id="run-memory-candidate-suite">Run Selected Suite</button>
+                <button type="button" id="refresh-wiki-candidate-suites">Refresh Wiki Suites</button>
+                <button type="button" id="run-wiki-candidate-suite">Run Wiki Suite</button>
+                <button type="button" id="approve-memory-candidate-case">Apply Candidate Review</button>
+                <button type="button" id="batch-review-memory-candidate-cases">Batch Review Selected</button>
+                <button type="button" id="approve-wiki-candidate-case">Apply Wiki Review</button>
+                <button type="button" id="batch-review-wiki-candidate-cases">Batch Wiki Review</button>
+                <button type="button" id="compare-wiki-candidate-case">Compare Wiki Case</button>
+                <button type="button" id="compare-wiki-candidate-suite">Compare Wiki Suite</button>
+                <button type="button" id="compare-memory-candidate-case">Compare Selected Case</button>
+                <button type="button" id="compare-memory-candidate-suite">Compare Selected Suite</button>
+                <button type="button" id="promote-memory-candidate-case-gold">Promote Candidate To Gold</button>
+                <button type="button" id="rollback-memory-gold-case">Rollback Gold Promote</button>
+                <button type="button" id="batch-rollback-memory-gold-cases">Batch Rollback Selected</button>
+                <button type="button" id="load-memory-gold-history">Load Gold History</button>
+              </div>
+              <div class="field-row">
+                <label>
+                  Review Decision
+                  <select id="memory-candidate-review-decision">
+                    <option value="approved">approved</option>
+                    <option value="needs_revision">needs_revision</option>
+                    <option value="rejected">rejected</option>
+                  </select>
+                </label>
+                <label>
+                  Reviewer
+                  <input id="memory-candidate-reviewer-id" value="console_reviewer" />
+                </label>
+              </div>
+              <div class="field-row">
+                <label>
+                  Wiki Review Decision
+                  <select id="wiki-candidate-review-decision">
+                    <option value="approved">approved</option>
+                    <option value="needs_revision">needs_revision</option>
+                    <option value="rejected">rejected</option>
+                  </select>
+                </label>
+                <label>
+                  Wiki Reviewer
+                  <input id="wiki-candidate-reviewer-id" value="console_reviewer" />
+                </label>
+              </div>
+              <label>
+                Wiki Review Notes
+                <textarea id="wiki-candidate-review-notes" rows="2">Reviewed from wiki candidate suite console flow</textarea>
+              </label>
+              <label>
+                Review Notes
+                <textarea id="memory-candidate-review-notes" rows="2">Reviewed from candidate suite console flow</textarea>
+              </label>
+              <div class="chip-row" id="harness-summary-chips"></div>
+              <div class="list" id="harness-run-list"></div>
+              <div class="list" id="harness-draft-case-list"></div>
+              <div class="list" id="harness-candidate-suite-list"></div>
+              <div class="inspector-output">
+                <div id="harness-detail-output"></div>
+              </div>
+            </div>
+            <div class="fields" id="delivery-ops" hidden>
+              <div class="field-row">
+                <label>
+                  Platform Filter
+                  <select id="delivery-platform-filter">
+                    <option value="all">all</option>
+                  </select>
+                </label>
+                <label>
+                  Status Filter
+                  <select id="delivery-status-filter">
+                    <option value="all">all</option>
+                  </select>
+                </label>
+              </div>
+              <div class="field-row">
+                <label>
+                  Sort
+                  <select id="delivery-sort-order">
+                    <option value="newest">newest</option>
+                    <option value="oldest">oldest</option>
+                    <option value="status">status</option>
+                    <option value="platform">platform</option>
+                  </select>
+                </label>
+                <label>
+                  Selected Delivery
+                  <input id="delivery-selected-id" readonly placeholder="delivery_..." />
+                </label>
+              </div>
+              <div class="toolbar">
+                <button type="button" id="refresh-deliveries">Refresh Deliveries</button>
+                <button type="button" id="clear-delivery-filters">Clear Filters</button>
+              </div>
+              <div class="chip-row" id="delivery-summary-chips"></div>
+              <div class="list" id="delivery-list"></div>
+              <div class="list" id="delivery-receipt-list"></div>
+              <div class="inspector-output">
+                <pre id="delivery-detail-output"></pre>
+              </div>
+            </div>
+            <div class="fields" id="queue-ops" hidden>
+              <div class="field-row">
+                <label>
+                  Task Filter
+                  <input id="queue-task-filter" placeholder="task id" />
+                </label>
+                <label>
+                  Trace Filter
+                  <input id="queue-trace-filter" placeholder="trace id" />
+                </label>
+              </div>
+              <div class="field-row">
+                <label>
+                  Worker Filter
+                  <input id="queue-worker-filter" placeholder="worker id" />
+                </label>
+                <label>
+                  Status Filter
+                  <select id="queue-status-filter">
+                    <option value="all">all</option>
+                  </select>
+                </label>
+              </div>
+              <div class="field-row">
+                <label>
+                  Selected Job
+                  <input id="queue-selected-id" readonly placeholder="job_..." />
+                </label>
+                <label>
+                  Queue Scope
+                  <input value="worker queue snapshot" readonly />
+                </label>
+              </div>
+              <div class="toolbar">
+                <button type="button" id="refresh-queue">Refresh Queue</button>
+                <button type="button" id="requeue-stale-jobs">Requeue Stale Jobs</button>
+                <button type="button" id="inspect-queue-dead-letters">Dead Letters</button>
+                <button type="button" id="inspect-queue-recovery">Recovery</button>
+                <button type="button" id="inspect-queue-governance">Governance</button>
+                <button type="button" id="clear-queue-filters">Clear Filters</button>
+              </div>
+              <div class="chip-row" id="queue-summary-chips"></div>
+              <div class="list" id="queue-job-list"></div>
+              <div class="inspector-output">
+                <pre id="queue-detail-output"></pre>
+              </div>
+            </div>
+            <div class="fields" id="model-ops" hidden>
+              <div class="chip-row" id="model-summary-chips"></div>
+              <div class="list" id="model-provider-list"></div>
+              <div class="list" id="model-fallback-list"></div>
+              <div class="inspector-output">
+                <pre id="model-detail-output"></pre>
+              </div>
+            </div>
+            <div class="fields" id="knowledge-ops" hidden>
+              <div class="field-row">
+                <label>
+                  Derived Query
+                  <input id="knowledge-query" readonly placeholder="derived from task message" />
+                </label>
+                <label>
+                  Selected Stage
+                  <input id="knowledge-selected-stage" readonly placeholder="query_frontend" />
+                </label>
+              </div>
+              <div class="chip-row" id="knowledge-summary-chips"></div>
+              <div class="list" id="knowledge-stage-list"></div>
+              <div class="inspector-output">
+                <div id="knowledge-detail-output"></div>
+              </div>
+            </div>
+            <div class="fields" id="memory-ops" hidden>
+              <div class="chip-row" id="memory-summary-chips"></div>
+              <div class="inspector-output">
+                <div id="memory-detail-output"></div>
+              </div>
+            </div>
+            <div class="fields" id="tools-ops" hidden>
+              <div class="chip-row" id="tools-summary-chips"></div>
+              <div class="inspector-output">
+                <div id="tools-detail-output"></div>
+              </div>
+            </div>
+            <div class="fields" id="governance-ops" hidden>
+              <div class="chip-row" id="governance-summary-chips"></div>
+              <div class="inspector-output">
+                <div id="governance-detail-output"></div>
+              </div>
+            </div>
+            <div class="fields" id="approval-ops" hidden>
+              <div class="field-row">
+                <label>
+                  Selected Review
+                  <input id="approval-selected-id" readonly placeholder="review_..." />
+                </label>
+              </div>
+              <div class="chip-row" id="approval-summary-chips"></div>
+              <div class="list" id="approval-list"></div>
+              <div class="list" id="approval-change-list"></div>
+              <div class="inspector-output">
+                <pre id="approval-detail-output"></pre>
+              </div>
+            </div>
+            <div class="fields" id="dead-letter-ops" hidden>
+              <div class="field-row">
+                <label>
+                  Dead-letter Status
+                  <select id="dead-letter-status-filter">
+                    <option value="all">all</option>
+                  </select>
+                </label>
+                <label>
+                  Replayable
+                  <select id="dead-letter-replayable-filter">
+                    <option value="all">all</option>
+                    <option value="true">true</option>
+                    <option value="false">false</option>
+                  </select>
+                </label>
+              </div>
+              <div class="field-row">
+                <label>
+                  Selected Dead-letter
+                  <input id="dead-letter-selected-id" readonly placeholder="dlq_..." />
+                </label>
+                <label>
+                  Recovery Strategy
+                  <input value="uses top-level recovery mode selector" readonly />
+                </label>
+              </div>
+              <div class="toolbar">
+                <button type="button" id="refresh-dead-letters">Refresh Dead Letters</button>
+                <button type="button" id="replay-dead-letter">Replay Worker Job</button>
+                <button type="button" id="recover-dead-letter-task">Recover Task</button>
+              </div>
+              <div class="chip-row" id="dead-letter-summary-chips"></div>
+              <div class="list" id="dead-letter-list"></div>
+              <div class="inspector-output">
+                <div id="dead-letter-detail-output"></div>
+              </div>
+            </div>
+            <div class="fields" id="recovery-ops" hidden>
+              <div class="field-row">
+                <label>
+                  Recovery Status
+                  <select id="recovery-status-filter">
+                    <option value="all">all</option>
+                  </select>
+                </label>
+                <label>
+                  Selected Drill
+                  <input id="recovery-selected-id" readonly placeholder="drill_..." />
+                </label>
+              </div>
+              <div class="toolbar">
+                <button type="button" id="refresh-recovery-drills">Refresh Recovery</button>
+              </div>
+              <div class="chip-row" id="recovery-summary-chips"></div>
+              <div class="list" id="recovery-list"></div>
+              <div class="inspector-output">
+                <div id="recovery-detail-output"></div>
+              </div>
+            </div>
+            <div class="inspector-output">
+              <pre id="inspector-output"></pre>
+            </div>
+          </div>
+        </section>
       </section>
     </main>
+
     <script type="module" src="/app.mjs"></script>
   </body>
 </html>

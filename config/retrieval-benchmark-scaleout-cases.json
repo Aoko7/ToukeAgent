@@ -1,0 +1,46 @@
+{
+  "cases": [
+    {
+      "case_id": "quantized_side_tuning",
+      "query": "side tuning for quantized llms with lower memory overhead",
+      "expected_title": "Quantized Side Tuning: Fast and Memory-Efficient Tuning of Quantized Large Language Models",
+      "manifest_path": "data/papers/manifests/acl-2024-offset0-limit20.jsonl",
+      "tags": ["acl", "llm", "quantization", "finetuning"]
+    },
+    {
+      "case_id": "mage_deepfake_text",
+      "query": "how does MAGE detect machine-generated deepfake text in the wild and explain ppl cue",
+      "expected_title": "MAGE: Machine-generated Text Detection in the Wild",
+      "manifest_path": "data/papers/manifests/acl-2024-offset0-limit20.jsonl",
+      "tags": ["acl", "llm", "detection"]
+    },
+    {
+      "case_id": "privlm_privacy_benchmark",
+      "query": "privacy benchmark that evaluates language models at multiple attack levels",
+      "expected_title": "PrivLM-Bench: A Multi-level Privacy Evaluation Benchmark for Language Models",
+      "manifest_path": "data/papers/manifests/acl-2024-offset0-limit20.jsonl",
+      "tags": ["acl", "privacy", "benchmark", "llm"]
+    },
+    {
+      "case_id": "evil_twin_prompts",
+      "query": "unintelligible prompts that still trigger similar model behavior",
+      "expected_title": "Prompts have evil twins",
+      "manifest_path": "data/papers/manifests/emnlp-2024-offset0-limit20.jsonl",
+      "tags": ["emnlp", "prompting", "robustness"]
+    },
+    {
+      "case_id": "fizz_consistency",
+      "query": "factual inconsistency detection with zoom-in summary and zoom-out document",
+      "expected_title": "FIZZ: Factual Inconsistency Detection by Zoom-in Summary and Zoom-out Document",
+      "manifest_path": "data/papers/manifests/emnlp-2024-offset0-limit20.jsonl",
+      "tags": ["emnlp", "summarization", "evaluation"]
+    },
+    {
+      "case_id": "tableqa_indic_languages",
+      "query": "table question answering for low-resource indic languages",
+      "expected_title": "Table Question Answering for Low-resourced Indic Languages",
+      "manifest_path": "data/papers/manifests/emnlp-2024-offset0-limit20.jsonl",
+      "tags": ["emnlp", "tableqa", "multilingual"]
+    }
+  ]
+}

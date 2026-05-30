@@ -1,0 +1,72 @@
+[
+  {
+    "case_id": "mage_deepfake_text",
+    "expected_doc_id": "paper::acl::2024::mage-machine-generated-text-detection-in-the-wild",
+    "required_supports": [
+      {
+        "label": "starter_intro_evidence",
+        "section_any_of": ["introduction"]
+      }
+    ]
+  },
+  {
+    "case_id": "evil_twin_prompts",
+    "expected_doc_id": "paper::emnlp::2024::prompts-have-evil-twins",
+    "required_supports": [
+      {
+        "label": "evil_twin_definition",
+        "section_any_of": ["abstract", "introduction"],
+        "snippet_any_of": ["unintelligible to humans", "evil twins", "functionally similar"]
+      },
+      {
+        "label": "transfer_or_robustness",
+        "section_any_of": ["our contributions", "introduction"],
+        "snippet_any_of": ["transfer", "robustness", "maximum-likelihood"]
+      }
+    ]
+  },
+  {
+    "case_id": "quantized_side_tuning",
+    "expected_doc_id": "paper::acl::2024::quantized-side-tuning-fast-and-memory-efficient-tuning-of-quantized-large-language-models",
+    "required_supports": [
+      {
+        "label": "starter_method_section",
+        "section_any_of": ["quantized side tuning"]
+      }
+    ]
+  },
+  {
+    "case_id": "privlm_privacy_benchmark",
+    "expected_doc_id": "paper::acl::2024::privlm-bench-a-multi-level-privacy-evaluation-benchmark-for-language-models",
+    "required_supports": [
+      {
+        "label": "starter_conclusion_evidence",
+        "section_any_of": ["conclusion"]
+      }
+    ]
+  },
+  {
+    "case_id": "fizz_consistency",
+    "expected_doc_id": "paper::emnlp::2024::fizz-factual-inconsistency-detection-by-zoom-in-summary-and-zoom-out-document",
+    "required_supports": [
+      {
+        "label": "starter_related_work_evidence",
+        "section_any_of": ["related work"]
+      },
+      {
+        "label": "starter_atomic_facts_scoring",
+        "section_any_of": ["atomic facts scoring"]
+      }
+    ]
+  },
+  {
+    "case_id": "tableqa_indic_languages",
+    "expected_doc_id": "paper::emnlp::2024::table-question-answering-for-low-resourced-indic-languages",
+    "required_supports": [
+      {
+        "label": "starter_intro_evidence",
+        "section_any_of": ["introduction"]
+      }
+    ]
+  }
+]

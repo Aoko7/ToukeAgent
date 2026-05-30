@@ -1,0 +1,92 @@
+{
+  "cases": [
+    {
+      "case_id": "knowledge_injection_compare",
+      "query": "compare fine-tuning and retrieval for injecting new factual knowledge into llms",
+      "expected_title": "Fine-Tuning or Retrieval? Comparing Knowledge Injection in LLMs",
+      "manifest_path": "data/papers/manifests/emnlp-2024-offset0-limit20.jsonl",
+      "difficulty": "hard-negative",
+      "hard_negative_titles": [
+        "Unsupervised Information Refinement Training of Large Language Models for Retrieval-Augmented Generation"
+      ],
+      "tags": ["emnlp", "rag", "knowledge-injection", "hard-negative"]
+    },
+    {
+      "case_id": "rotbench_tool_robustness",
+      "query": "multi-level benchmark for evaluating robustness of large language models in tool learning under noise",
+      "expected_title": "RoTBench: A Multi-Level Benchmark for Evaluating the Robustness of Large Language Models in Tool Learning",
+      "manifest_path": "data/papers/manifests/emnlp-2024-offset0-limit20.jsonl",
+      "difficulty": "hard-negative",
+      "hard_negative_titles": [
+        "PrivLM-Bench: A Multi-level Privacy Evaluation Benchmark for Language Models"
+      ],
+      "tags": ["emnlp", "benchmark", "tool-learning", "hard-negative"]
+    },
+    {
+      "case_id": "spy_camera_vs_em_eye",
+      "query": "embedded camera electromagnetic emissions and long-range spy camera detection",
+      "expected_title": "Eye of Sauron: {Long-Range} Hidden Spy Camera Detection and Positioning with Inbuilt Memory {EM} Radiation",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "difficulty": "hard-negative",
+      "hard_negative_titles": [
+        "EM Eye: Characterizing Electromagnetic Side-channel Eavesdropping on Embedded Cameras"
+      ],
+      "tags": ["usenix_security", "hardware", "camera", "em", "hard-negative"]
+    },
+    {
+      "case_id": "em_eye_vs_spy_camera",
+      "query": "electromagnetic side-channel eavesdropping on embedded cameras",
+      "expected_title": "EM Eye: Characterizing Electromagnetic Side-channel Eavesdropping on Embedded Cameras",
+      "manifest_path": "data/papers/manifests/ndss-2024.jsonl",
+      "difficulty": "hard-negative",
+      "hard_negative_titles": [
+        "Eye of Sauron: {Long-Range} Hidden Spy Camera Detection and Positioning with Inbuilt Memory {EM} Radiation"
+      ],
+      "tags": ["ndss", "hardware", "camera", "em", "hard-negative"]
+    },
+    {
+      "case_id": "quantized_side_tuning_vs_bitdistiller",
+      "query": "side tuning for quantized llms with lower memory overhead",
+      "expected_title": "Quantized Side Tuning: Fast and Memory-Efficient Tuning of Quantized Large Language Models",
+      "manifest_path": "data/papers/manifests/acl-2024-offset0-limit20.jsonl",
+      "difficulty": "hard-negative",
+      "hard_negative_titles": [
+        "BitDistiller: Unleashing the Potential of Sub-4-Bit LLMs via Self-Distillation"
+      ],
+      "tags": ["acl", "llm", "quantization", "finetuning", "hard-negative"]
+    },
+    {
+      "case_id": "mage_vs_demasq",
+      "query": "how does MAGE detect machine-generated deepfake text in the wild and explain ppl cue",
+      "expected_title": "MAGE: Machine-generated Text Detection in the Wild",
+      "manifest_path": "data/papers/manifests/acl-2024-offset0-limit20.jsonl",
+      "difficulty": "hard-negative",
+      "hard_negative_titles": [
+        "DEMASQ: Unmasking the ChatGPT Wordsmith"
+      ],
+      "tags": ["acl", "llm", "detection", "deepfake-text", "hard-negative"]
+    },
+    {
+      "case_id": "attackgnn_vs_insight",
+      "query": "reinforcement learning red teaming of graph neural networks for hardware security",
+      "expected_title": "{AttackGNN}: {Red-Teaming} {GNNs} in Hardware Security Using Reinforcement Learning",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "difficulty": "hard-negative",
+      "hard_negative_titles": [
+        "{INSIGHT}: Attacking {Industry-Adopted} Learning Resilient Logic Locking Techniques Using Explainable Graph Neural Network"
+      ],
+      "tags": ["usenix_security", "hardware-security", "reinforcement-learning", "gnn", "hard-negative"]
+    },
+    {
+      "case_id": "pakistani_creators_vs_onlyfans",
+      "query": "digital threats and security practices of Pakistani content creators",
+      "expected_title": "\"I chose to fight, be brave, and to deal with it\": Threat Experiences and Security Practices of Pakistani Content Creators",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "difficulty": "hard-negative",
+      "hard_negative_titles": [
+        "\"I feel physically safe but not politically safe\": Understanding the Digital Threats and Safety Practices of {OnlyFans} Creators"
+      ],
+      "tags": ["usenix_security", "safety", "creators", "threat-model", "hard-negative"]
+    }
+  ]
+}

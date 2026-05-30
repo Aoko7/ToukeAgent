@@ -28,6 +28,15 @@
 6. 一个人格配置
 7. 一套工具注册与审计链
 
+其中 hybrid RAG 的当前工程基线是：
+- 单一多语种 embedding 空间，避免多模型空间混用
+- 默认向量库 `Qdrant`
+- 默认 embedding 模型 `multilingual-e5-base`
+- 资源更紧时可回退到 `multilingual-e5-small`
+- `bge-m3` 保留为后续索引重建和质量升级路线
+- 主链按 `query frontend -> hybrid retrieval -> metadata filter policy -> parent-child 聚合 -> evidence pack -> generation -> evaluation` 理解
+- `RAG` 负责稳定知识，`LLM wiki` 负责动态结构化事实，`memory` 负责任务过程与用户偏好
+
 这条路径跑通后，再逐步扩展到：
 - 多人格切换
 - 多 Agent 协作
@@ -63,3 +72,31 @@
 - `contracts.md` 负责告诉开发“字段到底长什么样”
 - `spec.md` 负责告诉测试“什么才算做完”
 - `tasks.md` 负责告诉排期“先做哪一段最划算”
+
+## 开发落地入口
+如果要继续在这个变更包上开发，建议按下面顺序进入：
+
+1. 先读仓库根目录 `docs/development-playbook.md`
+2. 再读仓库根目录 `docs/engineering-manual.md`
+3. 再读根目录 `AGENTS.md`
+4. 然后回到当前变更包里的 `design.md`、`contracts.md`、`tasks.md`
+5. 如果要开始下一阶段实现，把切片写入 `docs/superpowers/plans/*.md`
+6. 如果发现范围已经超出当前变更包，先补 OpenSpec，再继续编码
+
+## 当前开发含义
+这份 OpenSpec 变更包已经覆盖：
+- 总体架构
+- Python core / Node shell 边界
+- 主要对象契约
+- 当前已完成阶段
+
+这份变更包还没有自动替你决定：
+- 当前 backlog 应先拿哪一个平台化切片
+- 哪些工作要先做工程底座，哪些可以后置
+- 每个切片的开发执行顺序
+
+这些内容由仓库根目录 `docs/development-playbook.md` 和 `docs/framework-next-steps.md` 补充说明。
+
+其中：
+- `docs/development-playbook.md` 负责告诉你“现在该先做哪类事”
+- `docs/engineering-manual.md` 负责告诉你“代码具体该放哪里、怎么跑、怎么守边界”

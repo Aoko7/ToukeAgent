@@ -5,3 +5,7 @@ export { createStreamEvent, STREAM_EVENT_TYPES } from './stream-event.mjs';
 export { createToolDefinition, createToolCallRequest, createToolCallResult } from './tool-invocation.mjs';
 export { createPersonaProfile } from './persona-profile.mjs';
 export { createRouteBinding } from './route-binding.mjs';
+export { createAgentHandoffPacket } from './agent-handoff-packet.mjs';
+export { createContextCompressionSnapshot } from './context-compression-snapshot.mjs';
+export { createPlatformAdapterProfile, createPlatformDeliveryRequest, createPlatformDeliveryReceipt } from './platform-delivery.mjs';
+export { createKnowledgeContract, createQueryAnalysis } from './knowledge-contract.mjs';

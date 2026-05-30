@@ -1,6 +1,6 @@
 import { asArray, asNumber, asObject, asOptionalString, asString, clone } from './_shared.mjs';
 
-const RUN_STATUS = new Set(['queued', 'planning', 'running', 'completed', 'failed', 'cancelled']);
+const RUN_STATUS = new Set(['queued', 'planning', 'running', 'waiting_approval', 'resuming', 'taken_over', 'completed', 'failed', 'cancelled']);
 
 export function createStepResult(input) {
   const result = asObject(input, 'step result');

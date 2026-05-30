@@ -1,8 +1,104 @@
 {
   "deepseek": {
-    "apiKey": "",
+    "apiKey": "YOUR_DEEPSEEK_API_KEY_HERE",
     "baseUrl": "https://api.deepseek.com",
     "model": "deepseek-v4-flash",
     "reasoningEffort": "medium"
+  },
+  "routing": {
+    "orchestrator": "legacy",
+    "provider": "deepseek",
+    "primaryModel": "deepseek-v4-flash",
+    "defaultReasoningEffort": "medium",
+    "providers": {
+      "deepseek": {
+        "label": "DeepSeek primary",
+        "mode": "remote",
+        "enabled": true
+      },
+      "local": {
+        "label": "Local compose",
+        "mode": "local-compose",
+        "enabled": true
+      }
+    },
+    "fallback": {
+      "provider": "local",
+      "strategy": "local-compose"
+    },
+    "fallbackChain": [
+      {
+        "provider": "local",
+        "strategy": "local-compose"
+      }
+    ],
+    "profiles": {
+      "fast": {
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "reasoningEffort": "low",
+        "budgetTier": "economy"
+      },
+      "balanced": {
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "reasoningEffort": "medium",
+        "budgetTier": "balanced"
+      },
+      "deep": {
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro",
+        "reasoningEffort": "high",
+        "budgetTier": "premium"
+      }
+    }
+  },
+  "memory": {
+    "provider": "local_builtin",
+    "filePath": "./data/runtime/memory-store.json",
+    "sessionArchivePath": "./data/runtime/session-memory",
+    "fallbackChain": [
+      {
+        "provider": "local_builtin",
+        "reason": "local_recovery"
+      }
+    ],
+    "providers": {
+      "local_builtin": {
+        "label": "Local builtin memory",
+        "mode": "local",
+        "workspaceIsolated": true,
+        "personaIsolated": true
+      },
+      "mem0_compatible": {
+        "label": "Mem0-compatible memory",
+        "mode": "external",
+        "workspaceIsolated": true,
+        "personaIsolated": true
+      }
+    },
+    "writePolicy": {
+      "allowAutoPromote": true,
+      "durableWriteThreshold": 0.85,
+      "requireVerification": true
+    },
+    "retrievalPolicy": {
+      "defaultTopK": 4,
+      "preferLongTerm": true,
+      "staleAfterHours": 168
+    },
+    "compressionPolicy": {
+      "allowSnapshotReuse": true,
+      "requireMustKeep": true
+    }
+  },
+  "wiki": {
+    "sqlitePath": "./data/runtime/wiki-store.sqlite",
+    "redis": {
+      "enabled": false,
+      "url": "redis://127.0.0.1:6379",
+      "keyPrefix": "toukeagent:wiki",
+      "ttlSeconds": 60
+    }
   }
 }

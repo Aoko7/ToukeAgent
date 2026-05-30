@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "toukeagent-core"
+version = "0.1.0"
+description = "Python core for ToukeAgent planning, retrieval routing, and evaluation"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+retrieval = [
+  "qdrant-client>=1.9",
+  "sentence-transformers>=3.0",
+]
+orchestration = [
+  "langgraph>=0.2",
+]
+
+[project.scripts]
+toukeagent-core = "toukeagent_core.cli:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["toukeagent_core*"]

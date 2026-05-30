@@ -1,0 +1,93 @@
+[
+  {
+    "case_id": "quantized_side_tuning",
+    "expected_doc_id": "paper::acl::2024::quantized-side-tuning-fast-and-memory-efficient-tuning-of-quantized-large-language-models",
+    "required_supports": [
+      {
+        "label": "qst_conclusion_dual_stage",
+        "section_any_of": ["conclusion"],
+        "snippet_all_of": ["dual-stage process", "4-bit", "side network"]
+      }
+    ]
+  },
+  {
+    "case_id": "mage_deepfake_text",
+    "expected_doc_id": "paper::acl::2024::mage-machine-generated-text-detection-in-the-wild",
+    "required_supports": [
+      {
+        "label": "mage_intro_scope_limit",
+        "section_any_of": ["introduction"],
+        "snippet_all_of": ["specific domains", "deepfake texts"]
+      },
+      {
+        "label": "mage_analysis_perplexity_bias",
+        "section_any_of": ["analysis"],
+        "snippet_all_of": ["perplexity", "human-written texts", "paraphrasing attacks"]
+      }
+    ]
+  },
+  {
+    "case_id": "privlm_privacy_benchmark",
+    "expected_doc_id": "paper::acl::2024::privlm-bench-a-multi-level-privacy-evaluation-benchmark-for-language-models",
+    "required_supports": [
+      {
+        "label": "privlm_intro_tradeoff",
+        "section_any_of": ["introduction"],
+        "snippet_all_of": ["privacy-utility trade-off", "fairly quantify", "multifaceted privacy attacks"]
+      },
+      {
+        "label": "privlm_conclusion_limits",
+        "section_any_of": ["conclusion"],
+        "snippet_all_of": ["adversarial standpoint", "limitations", "prompt injection attacks"]
+      }
+    ]
+  },
+  {
+    "case_id": "evil_twin_prompts",
+    "expected_doc_id": "paper::emnlp::2024::prompts-have-evil-twins",
+    "required_supports": [
+      {
+        "label": "evil_twin_abstract_core_claim",
+        "section_any_of": ["abstract"],
+        "snippet_all_of": ["unintelligible to humans", "evil twins", "transfer between models"]
+      },
+      {
+        "label": "evil_twin_intro_similarity_measure",
+        "section_any_of": ["our contributions", "introduction"],
+        "snippet_all_of": ["functionally similarly", "quantitative measure", "functional similarity"]
+      }
+    ]
+  },
+  {
+    "case_id": "fizz_consistency",
+    "expected_doc_id": "paper::emnlp::2024::fizz-factual-inconsistency-detection-by-zoom-in-summary-and-zoom-out-document",
+    "required_supports": [
+      {
+        "label": "fizz_related_work_llm_eval",
+        "section_any_of": ["related work"],
+        "snippet_all_of": ["chatgpt", "zero-shot prompting", "gpt-4"]
+      },
+      {
+        "label": "fizz_atomic_fact_scoring_details",
+        "section_any_of": ["atomic facts scoring"],
+        "snippet_all_of": ["assign scores", "maximum entailment score", "atomic fact"]
+      }
+    ]
+  },
+  {
+    "case_id": "tableqa_indic_languages",
+    "expected_doc_id": "paper::emnlp::2024::table-question-answering-for-low-resourced-indic-languages",
+    "required_supports": [
+      {
+        "label": "tableqa_intro_problem",
+        "section_any_of": ["introduction"],
+        "snippet_all_of": ["data scarcity", "cultural facts", "low-resource"]
+      },
+      {
+        "label": "tableqa_answer_table_extraction",
+        "section_any_of": ["answer table extraction"],
+        "snippet_all_of": ["code-mixed sql queries", "low-resourced wikipedia tables", "answer tables"]
+      }
+    ]
+  }
+]

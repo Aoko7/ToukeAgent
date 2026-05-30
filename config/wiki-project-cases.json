@@ -1,0 +1,637 @@
+{
+  "cases": [
+    {
+      "case_id": "wiki_project_pretraining_fresh_accept",
+      "payload": {
+        "query": "当前预训练状态是什么",
+        "persona_id": "researcher",
+        "stable_items": [
+          {
+            "doc_id": "doc_project_arch_1",
+            "chunk_id": "chunk_project_arch_1",
+            "title": "Architecture overview",
+            "source_type": "rag",
+            "freshness": "stable",
+            "text": "Stable architecture background for the malware family classification project."
+          }
+        ],
+        "dynamic_items": [
+          {
+            "entry_id": "wiki_project_pretraining_status",
+            "title": "Project pretraining status",
+            "summary": "Current pretraining milestones and progress snapshot for the project.",
+            "facts": [
+              "BinMAE pretraining completed with loss 0.61.",
+              "GNN or GraphCL pretraining completed with loss 4.57.",
+              "The corpus now covers about 1.6万 function call graphs and about 300万个 sampled function byte streams."
+            ],
+            "tags": [
+              "project",
+              "status",
+              "pretraining",
+              "当前",
+              "状态",
+              "预训练"
+            ],
+            "source_type": "wiki",
+            "freshness": "dynamic",
+            "owner": "project_ops",
+            "required_context": [
+              "project_scope",
+              "milestone_scope"
+            ],
+            "retrieval_hints": [
+              "current pretraining status",
+              "预训练状态",
+              "BinMAE",
+              "GraphCL"
+            ],
+            "ttl_seconds": 1209600,
+            "source_of_truth": "private-notes/project-briefing.md",
+            "version": "v2",
+            "metadata": {
+              "entity_id": "project_pretraining_status"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first",
+        "expected_fallback_applied": false,
+        "expected_recommended_action": "accept",
+        "min_retrieval_score": 0.82,
+        "min_freshness_score": 0.9,
+        "min_contract_coverage_score": 0.9,
+        "min_primary_source_count": 1,
+        "min_dynamic_count": 1,
+        "required_citation_titles": [
+          "Project pretraining status"
+        ]
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "project_pretraining",
+        "language": "zh",
+        "expected_bucket": "fresh_project_status",
+        "tags": [
+          "project",
+          "freshness",
+          "status"
+        ]
+      }
+    },
+    {
+      "case_id": "wiki_project_stale_refresh_pair_accept",
+      "payload": {
+        "query": "当前主线模型选择状态是什么",
+        "persona_id": "researcher",
+        "stable_items": [
+          {
+            "doc_id": "doc_project_robustness_1",
+            "chunk_id": "chunk_project_robustness_1",
+            "title": "Robustness evaluation archive",
+            "source_type": "rag",
+            "freshness": "stable",
+            "text": "Stable robustness archive covering import augmentation, UPX, and hybrid attacks."
+          }
+        ],
+        "dynamic_items": [
+          {
+            "entry_id": "wiki_project_model_selection_status",
+            "title": "Project model selection status",
+            "summary": "Current decision board for the main model line under the project.",
+            "facts": [
+              "transmacro_full is the safest current mainline choice.",
+              "transmacro_full outperforms baseline_full across all 7 attack buckets."
+            ],
+            "tags": [
+              "project",
+              "status",
+              "model",
+              "主线",
+              "状态",
+              "当前"
+            ],
+            "source_type": "wiki",
+            "freshness": "dynamic",
+            "owner": "project_ops",
+            "required_context": [
+              "project_scope",
+              "model_scope"
+            ],
+            "retrieval_hints": [
+              "current main model status",
+              "主线模型选择"
+            ],
+            "ttl_seconds": 1209600,
+            "source_of_truth": "private-notes/robustness-results.md",
+            "version": "v3",
+            "metadata": {
+              "entity_id": "project_model_selection"
+            }
+          },
+          {
+            "entry_id": "wiki_project_model_selection_snapshot",
+            "title": "Project model selection snapshot",
+            "summary": "Historical snapshot for the main model line under the project.",
+            "facts": [
+              "Earlier local comparison notes highlighted nomhsa on the import-only perturbation."
+            ],
+            "tags": [
+              "project",
+              "status",
+              "model",
+              "历史"
+            ],
+            "source_type": "wiki",
+            "freshness": "historical",
+            "owner": "project_ops",
+            "required_context": [
+              "project_scope",
+              "model_scope"
+            ],
+            "retrieval_hints": [
+              "historical model snapshot"
+            ],
+            "ttl_seconds": 1209600,
+            "source_of_truth": "private-notes/robustness-results.md",
+            "version": "v2",
+            "metadata": {
+              "entity_id": "project_model_selection"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first",
+        "expected_fallback_applied": false,
+        "expected_recommended_action": "accept",
+        "min_retrieval_score": 0.82,
+        "min_freshness_score": 0.7,
+        "min_contract_coverage_score": 0.9,
+        "min_primary_source_count": 2,
+        "min_dynamic_count": 2,
+        "required_citation_titles": [
+          "Project model selection status"
+        ]
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "project_model_selection",
+        "language": "zh",
+        "expected_bucket": "stale_refresh_pair",
+        "tags": [
+          "project",
+          "freshness",
+          "refresh_pair"
+        ]
+      }
+    },
+    {
+      "case_id": "wiki_project_source_conflict_needs_supplement",
+      "payload": {
+        "query": "当前主线模型选择状态是什么",
+        "persona_id": "researcher",
+        "stable_items": [
+          {
+            "doc_id": "doc_project_robustness_2",
+            "chunk_id": "chunk_project_robustness_2",
+            "title": "Robustness evaluation archive",
+            "source_type": "rag",
+            "freshness": "stable",
+            "text": "Stable robustness archive confirms the cross-bucket comparison setting."
+          }
+        ],
+        "dynamic_items": [
+          {
+            "entry_id": "wiki_project_model_selection_status",
+            "title": "Project model selection status",
+            "summary": "Current decision board for the main model line under the project.",
+            "facts": [
+              "transmacro_full is the safest current mainline choice."
+            ],
+            "tags": [
+              "project",
+              "status",
+              "model",
+              "主线",
+              "状态",
+              "当前"
+            ],
+            "source_type": "wiki",
+            "freshness": "dynamic",
+            "owner": "project_ops",
+            "required_context": [
+              "project_scope",
+              "model_scope"
+            ],
+            "retrieval_hints": [
+              "current main model status",
+              "主线模型选择"
+            ],
+            "ttl_seconds": 1209600,
+            "source_of_truth": "private-notes/robustness-results.md",
+            "version": "v3",
+            "metadata": {
+              "entity_id": "project_model_selection"
+            }
+          },
+          {
+            "entry_id": "wiki_project_model_selection_shadow",
+            "title": "Project model selection shadow",
+            "summary": "Alternative dynamic note for the same main model decision.",
+            "facts": [
+              "nomhsa should remain the mainline choice for the current stage."
+            ],
+            "tags": [
+              "project",
+              "status",
+              "model",
+              "主线",
+              "状态",
+              "当前"
+            ],
+            "source_type": "wiki",
+            "freshness": "dynamic",
+            "owner": "meeting_ops",
+            "required_context": [
+              "project_scope",
+              "model_scope"
+            ],
+            "retrieval_hints": [
+              "current main model status",
+              "主线模型选择"
+            ],
+            "ttl_seconds": 1209600,
+            "source_of_truth": "meeting_note_shadow.md",
+            "version": "v1",
+            "metadata": {
+              "entity_id": "project_model_selection"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first",
+        "expected_fallback_applied": false,
+        "expected_recommended_action": "supplement_rag",
+        "min_retrieval_score": 0.7,
+        "max_retrieval_score": 0.82,
+        "min_freshness_score": 0.9,
+        "min_contract_coverage_score": 0.9,
+        "min_primary_source_count": 2,
+        "min_dynamic_count": 2,
+        "required_citation_titles": [
+          "Project model selection status"
+        ]
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "project_source_conflict",
+        "language": "zh",
+        "expected_bucket": "source_conflict",
+        "tags": [
+          "project",
+          "conflict",
+          "source_of_truth"
+        ]
+      }
+    },
+    {
+      "case_id": "wiki_project_architecture_status_accept",
+      "payload": {
+        "query": "当前总体设计方案状态是什么",
+        "persona_id": "researcher",
+        "stable_items": [
+          {
+            "doc_id": "doc_project_arch_status_1",
+            "chunk_id": "chunk_project_arch_status_1",
+            "title": "Architecture background",
+            "source_type": "rag",
+            "freshness": "stable",
+            "text": "Stable explanation of why tri-modal malware analysis needs separate sequence, graph, and metadata views."
+          }
+        ],
+        "dynamic_items": [
+          {
+            "entry_id": "wiki_project_architecture_status",
+            "title": "Project architecture status",
+            "summary": "Current tri-modal architecture snapshot for the project.",
+            "facts": [
+              "The current design follows a divide-and-conquer plus dynamic fusion plan.",
+              "The micro branch uses BinMAE for byte-stream semantics.",
+              "The meso branch uses GraphCL for topology structure learning.",
+              "The macro branch uses a hierarchical hash attention network, then an adaptive gate fuses the three modalities."
+            ],
+            "tags": [
+              "project",
+              "status",
+              "architecture",
+              "方案",
+              "当前",
+              "状态"
+            ],
+            "source_type": "wiki",
+            "freshness": "dynamic",
+            "owner": "project_ops",
+            "required_context": [
+              "project_scope",
+              "architecture_scope"
+            ],
+            "retrieval_hints": [
+              "current architecture status",
+              "当前方案状态",
+              "当前总体设计"
+            ],
+            "ttl_seconds": 1209600,
+            "source_of_truth": "private-notes/project-briefing.md",
+            "version": "v1",
+            "metadata": {
+              "entity_id": "project_architecture_status"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first",
+        "expected_fallback_applied": false,
+        "expected_recommended_action": "accept",
+        "min_retrieval_score": 0.82,
+        "min_freshness_score": 0.9,
+        "min_contract_coverage_score": 0.9,
+        "min_primary_source_count": 1,
+        "min_dynamic_count": 1,
+        "required_citation_titles": [
+          "Project architecture status"
+        ]
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "project_architecture_status",
+        "language": "zh",
+        "expected_bucket": "fresh_project_status",
+        "tags": [
+          "project",
+          "architecture",
+          "status"
+        ]
+      }
+    },
+    {
+      "case_id": "wiki_project_binmae_status_accept",
+      "payload": {
+        "query": "当前 BinMAE 预训练状态是什么",
+        "persona_id": "researcher",
+        "stable_items": [
+          {
+            "doc_id": "doc_project_binmae_1",
+            "chunk_id": "chunk_project_binmae_1",
+            "title": "BinMAE background",
+            "source_type": "rag",
+            "freshness": "stable",
+            "text": "Stable explanation of masked autoencoding for binary semantics."
+          }
+        ],
+        "dynamic_items": [
+          {
+            "entry_id": "wiki_project_binmae_status",
+            "title": "Project BinMAE status",
+            "summary": "Current micro-level BinMAE implementation and pretraining snapshot for the project.",
+            "facts": [
+              "The current micro branch uses BinMAE as a binary masked autoencoder.",
+              "The architecture is asymmetric encoder-decoder rather than a symmetric BERT-style setup.",
+              "The current training policy uses dynamic random masking.",
+              "Current BinMAE pretraining finished at about 3 million functions with loss 0.61."
+            ],
+            "tags": [
+              "project",
+              "status",
+              "binmae",
+              "pretraining",
+              "微观",
+              "当前"
+            ],
+            "source_type": "wiki",
+            "freshness": "dynamic",
+            "owner": "project_ops",
+            "required_context": [
+              "project_scope",
+              "pretraining_scope",
+              "training_scope"
+            ],
+            "retrieval_hints": [
+              "current binmae status",
+              "当前 BinMAE 状态",
+              "BinMAE 预训练进度"
+            ],
+            "ttl_seconds": 1209600,
+            "source_of_truth": "private-notes/project-briefing.md",
+            "version": "v1",
+            "metadata": {
+              "entity_id": "project_binmae_status"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first",
+        "expected_fallback_applied": false,
+        "expected_recommended_action": "accept",
+        "min_retrieval_score": 0.82,
+        "min_freshness_score": 0.9,
+        "min_contract_coverage_score": 0.9,
+        "min_primary_source_count": 1,
+        "min_dynamic_count": 1,
+        "required_citation_titles": [
+          "Project BinMAE status"
+        ]
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "project_binmae_status",
+        "language": "zh",
+        "expected_bucket": "fresh_project_status",
+        "tags": [
+          "project",
+          "pretraining",
+          "status"
+        ]
+      }
+    },
+    {
+      "case_id": "wiki_project_import_augmentation_status_accept",
+      "payload": {
+        "query": "当前导入表增强状态是什么",
+        "persona_id": "researcher",
+        "stable_items": [
+          {
+            "doc_id": "doc_project_attack_1",
+            "chunk_id": "chunk_project_attack_1",
+            "title": "Robustness background",
+            "source_type": "rag",
+            "freshness": "stable",
+            "text": "Stable archive of attack taxonomy and robustness evaluation background."
+          }
+        ],
+        "dynamic_items": [
+          {
+            "entry_id": "wiki_project_import_augmentation_status",
+            "title": "Project import augmentation status",
+            "summary": "Current import-table augmentation workflow snapshot for the robustness evaluation pipeline.",
+            "facts": [
+              "The current import augmentation line edits the PE import table rather than code logic.",
+              "Each sample currently receives 2 benign DLL API imports that are not already present.",
+              "Selection uses sha256 prefix offsets so the augmentation remains reproducible.",
+              "Mutated samples are re-read with pefile to verify the injected imports actually landed."
+            ],
+            "tags": [
+              "project",
+              "status",
+              "robustness",
+              "attack",
+              "import",
+              "augmentation",
+              "当前"
+            ],
+            "source_type": "wiki",
+            "freshness": "dynamic",
+            "owner": "project_ops",
+            "required_context": [
+              "project_scope",
+              "robustness_scope"
+            ],
+            "retrieval_hints": [
+              "current import augmentation status",
+              "当前导入表增强状态",
+              "import augmentation 做法"
+            ],
+            "ttl_seconds": 1209600,
+            "source_of_truth": "private-notes/robustness-results.md",
+            "version": "v1",
+            "metadata": {
+              "entity_id": "project_import_augmentation_status"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first",
+        "expected_fallback_applied": false,
+        "expected_recommended_action": "accept",
+        "min_retrieval_score": 0.82,
+        "min_freshness_score": 0.9,
+        "min_contract_coverage_score": 0.9,
+        "min_primary_source_count": 1,
+        "min_dynamic_count": 1,
+        "required_citation_titles": [
+          "Project import augmentation status"
+        ]
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "project_import_augmentation_status",
+        "language": "zh",
+        "expected_bucket": "fresh_project_status",
+        "tags": [
+          "project",
+          "robustness",
+          "status"
+        ]
+      }
+    },
+    {
+      "case_id": "wiki_project_upx_status_accept",
+      "payload": {
+        "query": "当前 UPX 状态是什么",
+        "persona_id": "researcher",
+        "stable_items": [
+          {
+            "doc_id": "doc_project_attack_2",
+            "chunk_id": "chunk_project_attack_2",
+            "title": "UPX archive background",
+            "source_type": "rag",
+            "freshness": "stable",
+            "text": "Stable archive for PE packing and evaluation boundary notes."
+          }
+        ],
+        "dynamic_items": [
+          {
+            "entry_id": "wiki_project_upx_status",
+            "title": "Project UPX status",
+            "summary": "Current UPX packing workflow snapshot for the robustness evaluation pipeline.",
+            "facts": [
+              "The current UPX attack line directly packs PE binaries with upx.",
+              "Only return-code-0 samples are marked ok and preserved in mutated_bin.",
+              "CantPackException, AlreadyPackedException, and NotCompressibleException are explicitly logged as skipped.",
+              "Only ok samples continue into feature re-extraction and model evaluation."
+            ],
+            "tags": [
+              "project",
+              "status",
+              "robustness",
+              "attack",
+              "upx",
+              "当前"
+            ],
+            "source_type": "wiki",
+            "freshness": "dynamic",
+            "owner": "project_ops",
+            "required_context": [
+              "project_scope",
+              "robustness_scope"
+            ],
+            "retrieval_hints": [
+              "current upx status",
+              "当前 UPX 状态",
+              "upx 做法"
+            ],
+            "ttl_seconds": 1209600,
+            "source_of_truth": "private-notes/robustness-results.md",
+            "version": "v1",
+            "metadata": {
+              "entity_id": "project_upx_status"
+            }
+          }
+        ]
+      },
+      "reference": {
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first",
+        "expected_fallback_applied": false,
+        "expected_recommended_action": "accept",
+        "min_retrieval_score": 0.82,
+        "min_freshness_score": 0.9,
+        "min_contract_coverage_score": 0.9,
+        "min_primary_source_count": 1,
+        "min_dynamic_count": 1,
+        "required_citation_titles": [
+          "Project UPX status"
+        ]
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "project_upx_status",
+        "language": "zh",
+        "expected_bucket": "fresh_project_status",
+        "tags": [
+          "project",
+          "robustness",
+          "status"
+        ]
+      }
+    }
+  ]
+}

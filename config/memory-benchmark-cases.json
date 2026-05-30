@@ -1,0 +1,111 @@
+{
+  "cases": [
+    {
+      "case_id": "durable_preference_capture_zh",
+      "case_type": "durable_write",
+      "provider": "local_builtin",
+      "metadata": {
+        "language": "zh",
+        "tags": ["durable", "preference"]
+      },
+      "reference": {
+        "expected_phrases": ["中文回答", "简洁输出"],
+        "disallowed_phrases": ["明天早上十点提醒我"]
+      },
+      "observed": {
+        "promoted_memories": [
+          {
+            "memory_id": "mem_pref_cn",
+            "title": "请以后始终用中文回答，并记住我喜欢简洁输出。",
+            "summary": "Durable instruction captured from task trace_memory_test",
+            "facts": ["请以后始终用中文回答", "我喜欢简洁输出"]
+          },
+          {
+            "memory_id": "mem_temp_1",
+            "title": "明天早上十点提醒我",
+            "summary": "一次性提醒"
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "memory_recall_with_one_stale_hit",
+      "case_type": "memory_recall",
+      "provider": "mem0_compatible",
+      "metadata": {
+        "language": "zh",
+        "tags": ["recall", "durable"]
+      },
+      "reference": {
+        "expected_memory_ids": ["mem_pref_cn", "mem_style_short"],
+        "stale_memory_ids": ["mem_old_pricing"],
+        "top_k": 3
+      },
+      "observed": {
+        "retrieved_memories": [
+          {
+            "memory_id": "mem_pref_cn",
+            "title": "用中文回答",
+            "summary": "用户偏好中文输出"
+          },
+          {
+            "memory_id": "mem_style_short",
+            "title": "简洁输出",
+            "summary": "用户喜欢简洁风格"
+          },
+          {
+            "memory_id": "mem_old_pricing",
+            "title": "旧价格表",
+            "summary": "已经过期的 provider pricing",
+            "stale": true
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "compression_resume_guardrails",
+      "case_type": "compression_fidelity",
+      "provider": "local_builtin",
+      "metadata": {
+        "language": "en",
+        "tags": ["compression", "resume"]
+      },
+      "reference": {
+        "expected_must_keep": ["current step objective", "safety boundaries", "latest tool result"],
+        "expected_unresolved_items": ["Resolve pending human approval"],
+        "expected_memory_refs": ["mem_pref_cn"]
+      },
+      "observed": {
+        "snapshot": {
+          "must_keep": ["current step objective", "safety boundaries", "latest tool result"],
+          "unresolved_items": ["Resolve pending human approval"],
+          "memory_refs": ["mem_pref_cn", "mem_style_short"]
+        }
+      }
+    },
+    {
+      "case_id": "handoff_packet_complete_for_retriever",
+      "case_type": "handoff_sufficiency",
+      "provider": "mem0_compatible",
+      "metadata": {
+        "language": "en",
+        "tags": ["handoff", "multi-agent"]
+      },
+      "reference": {
+        "required_fields": ["objective", "context_snapshot_id", "must_keep", "evidence_refs", "output_schema"]
+      },
+      "observed": {
+        "handoff": {
+          "objective": "Investigate the relevant stable memory and summarize the key user preferences.",
+          "context_snapshot_id": "ctx_memory_1",
+          "must_keep": ["safety boundaries", "current step objective"],
+          "evidence_refs": ["call_1", "mem_pref_cn"],
+          "output_schema": {
+            "type": "object",
+            "required": ["summary", "citations"]
+          }
+        }
+      }
+    }
+  ]
+}

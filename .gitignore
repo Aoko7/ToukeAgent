@@ -3,7 +3,26 @@
 config/*.local.json
 node_modules
 .DS_Store
+__pycache__/
+*.py[cod]
+
+# Private notes and career artifacts. Keep them local; publish curated samples only.
+LLM wiki/
+resume/
+Hugging face Agent & 加速模型生成速度 & 大模型八股  by codex.md
+
+# Local runtime state and heavyweight/generated data.
+data/runtime/
+data/models/
+data/qdrant/
+data/evals/
+data/iteration_logs/
+data/wiki/audits/
 data/papers/raw/
 data/papers/cache/
 data/papers/manifests/*.jsonl
 data/papers/manifests/*.json
+data/papers/normalized/
+data/papers/chunks/
+data/papers/builds/
+data/papers/benchmarks/

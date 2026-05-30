@@ -1,9 +1,18 @@
 {
   "name": "toukeagent",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "node apps/platform/server.mjs",
+    "doctor": "python3 scripts/runtime_doctor.py",
+    "smoke:live": "python3 scripts/live_smoke.py",
+    "smoke:stream": "python3 scripts/stream_smoke.py",
+    "smoke:stream-reconnect": "python3 scripts/stream_reconnect_smoke.py",
+    "smoke:approval": "python3 scripts/approval_recovery_smoke.py",
+    "smoke:restart": "python3 scripts/restart_recovery_smoke.py",
+    "smoke:wiki-first": "python3 scripts/wiki_first_smoke.py",
+    "smoke:delivery": "python3 scripts/delivery_smoke.py",
     "test": "node --test tests/*.test.mjs",
     "test:contracts": "node --test tests/contracts.test.mjs",
     "test:server": "node --test tests/server.test.mjs"

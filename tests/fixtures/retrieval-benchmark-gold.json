@@ -1,0 +1,34 @@
+[
+  {
+    "case_id": "mage_deepfake_text",
+    "expected_doc_id": "paper::acl::2024::mage-machine-generated-text-detection-in-the-wild",
+    "required_supports": [
+      {
+        "label": "testbed_goal",
+        "section_any_of": ["abstract", "conclusion"],
+        "snippet_any_of": ["machine-generated text detection", "comprehensive testbed", "ai-generated text detection"]
+      },
+      {
+        "label": "perplexity_signal",
+        "section_any_of": ["analysis", "conclusion"],
+        "snippet_any_of": ["perplexity", "machine-generated texts", "human-written"]
+      }
+    ]
+  },
+  {
+    "case_id": "evil_twin_prompts",
+    "expected_doc_id": "paper::emnlp::2024::prompts-have-evil-twins",
+    "required_supports": [
+      {
+        "label": "evil_twin_definition",
+        "section_any_of": ["abstract", "introduction"],
+        "snippet_any_of": ["unintelligible to humans", "evil twins", "functionally similar"]
+      },
+      {
+        "label": "transfer_or_robustness",
+        "section_any_of": ["our contributions", "introduction"],
+        "snippet_any_of": ["transfer", "robustness", "maximum-likelihood"]
+      }
+    ]
+  }
+]

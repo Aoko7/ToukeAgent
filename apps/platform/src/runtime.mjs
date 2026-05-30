@@ -2,6 +2,9 @@ import {
   createAgentRunState,
   createStreamEvent,
 } from '../../../packages/contracts/src/index.mjs';
+import { redactText } from './secret-manager.mjs';
+import { buildPlanSummary, prepareRuntimeStep } from './runtime-policy.mjs';
+import { callPythonCore } from './python-core-bridge.mjs';
 
 function createBaseEventContext({ message, persona, runState }) {
   return {
@@ -12,10 +15,44 @@ function createBaseEventContext({ message, persona, runState }) {
   };
 }
 
-function buildPlanSummary(plan) {
-  return plan.steps
-    .map((step, index) => `${index + 1}. ${step.title}`)
-    .join(' | ');
+function findStepIndex(plan, stepId, fallback = 0) {
+  if (!stepId) {
+    return fallback;
+  }
+
+  const index = plan.steps.findIndex((step) => step.step_id === stepId);
+  return index >= 0 ? index : fallback;
+}
+
+function createInitialRunState({ message, persona, plan, resumeState = null }) {
+  if (resumeState) {
+    const state = createAgentRunState({
+      ...resumeState,
+      status: 'running',
+      total_steps: plan.steps.length,
+      plan_id: plan.plan_id,
+      task_id: message.trace_id,
+      trace_id: message.trace_id,
+      persona_id: persona.persona_id,
+    });
+
+    if (state.current_step_id) {
+      state.step_results = state.step_results.filter((item) => item.step_id !== state.current_step_id);
+    }
+
+    return state;
+  }
+
+  return createAgentRunState({
+    run_id: `run_${message.trace_id}`,
+    task_id: message.trace_id,
+    trace_id: message.trace_id,
+    persona_id: persona.persona_id,
+    plan_id: plan.plan_id,
+    status: 'planning',
+    total_steps: plan.steps.length,
+    step_results: [],
+  });
 }
 
 function attachWorkerStatusBridge({ eventBus, append, taskId, runId }) {
@@ -26,6 +63,7 @@ function attachWorkerStatusBridge({ eventBus, append, taskId, runId }) {
   const mappings = [
     ['worker.job.queued', 'worker_queued', (job) => `Queued ${job.job_type}`],
     ['worker.job.started', 'worker_running', (job) => `Running ${job.job_type}`],
+    ['worker.job.requeued', 'worker_requeued', (job) => `Requeued ${job.job_type} after failure`],
     ['worker.job.completed', 'worker_completed', (job) => `Completed ${job.job_type}`],
     ['worker.job.failed', 'worker_failed', (job) => `Failed ${job.job_type}: ${job.error?.message ?? 'unknown error'}`],
   ];
@@ -54,17 +92,11 @@ function attachWorkerStatusBridge({ eventBus, append, taskId, runId }) {
   };
 }
 
-export async function runAgentTask({ message, persona, plan, toolRegistry, store, responseComposer, worker = null, eventBus = null, memoryStore = null, onTaskUpdate = null }) {
-  const runState = createAgentRunState({
-    run_id: `run_${message.trace_id}`,
-    task_id: message.trace_id,
-    trace_id: message.trace_id,
-    persona_id: persona.persona_id,
-    plan_id: plan.plan_id,
-    status: 'planning',
-    total_steps: plan.steps.length,
-    step_results: [],
-  });
+export async function runAgentTask({ message, persona, plan, toolRegistry, store, responseComposer, worker = null, eventBus = null, memoryStore = null, onTaskUpdate = null, resumeState = null, approvalContext = { approved: false }, orchestratorMode = 'legacy' }) {
+  const runState = createInitialRunState({ message, persona, plan, resumeState });
+  const startStepIndex = resumeState
+    ? findStepIndex(plan, resumeState.current_step_id, Math.min(resumeState.completed_steps ?? 0, plan.steps.length))
+    : 0;
 
   const events = [];
   const append = (eventInput) => {
@@ -93,18 +125,141 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
     });
   };
 
-  try {
+  if (!resumeState && orchestratorMode === 'langgraph_mvp') {
+    const graphRetrievalStep = plan.steps.find((step) => step.tool_name === 'hybrid_retrieve') ?? null;
+    let graphRetrievalResult = null;
+    if (graphRetrievalStep) {
+      const retrievalDirective = prepareRuntimeStep({
+        message,
+        persona,
+        plan,
+        step: graphRetrievalStep,
+        runState,
+        approvalContext,
+      });
+      graphRetrievalResult = worker
+        ? await worker.dispatch({
+          job_type: 'tool.invoke',
+          trace_id: runState.trace_id,
+          task_id: runState.task_id,
+          run_id: runState.run_id,
+          step_id: graphRetrievalStep.step_id,
+          persona_id: persona.persona_id,
+          metadata: { tool_name: graphRetrievalStep.tool_name },
+          payload: { request: retrievalDirective.tool_request },
+          retry_limit: 2,
+          dead_letter_on_failure: true,
+          dead_letter_reason: 'worker_tool_failed',
+        })
+        : await toolRegistry.invoke(retrievalDirective.tool_request);
+    }
+    const memorySnapshot = memoryStore?.buildContext({
+      taskId: runState.task_id,
+      query: message.content?.find?.((part) => part.type === 'text')?.text ?? plan.goal,
+      limit: 4,
+    }) ?? null;
+    const graphResult = callPythonCore(
+      'run_orchestrator_graph',
+      {
+        message,
+        persona,
+        plan,
+        orchestrator_mode: orchestratorMode,
+        retrieval_result: graphRetrievalResult?.result ?? null,
+        memory_snapshot: memorySnapshot,
+      },
+      { caller: 'apps/platform/src/runtime.mjs' },
+    );
     append({
       event_type: 'start',
       payload: { title: 'Processing request', mode: 'assistant' },
     });
-    emitTaskUpdate('start', 'Processing request started');
+    for (const event of graphResult.node_events ?? []) {
+      append({
+        event_type: 'status',
+        payload: {
+          state: event.event_type,
+          message: `${event.node_name}:${event.event_type}`,
+        },
+        metadata: {
+          node_name: event.node_name,
+          duration_ms: event.duration_ms ?? null,
+          executor_backend: graphResult.executor_backend ?? null,
+        },
+      });
+    }
+    let composedResult = {
+      content: graphResult.result?.answer ?? '',
+      model_route: graphResult.draft?.model_route ?? null,
+      fallback: graphResult.draft?.fallback ?? null,
+    };
+    if (responseComposer?.compose) {
+      try {
+        const composed = await responseComposer.compose({
+          persona,
+          message,
+          plan,
+          retrievalResult: graphResult.retrieval_result ?? null,
+          memorySnapshot,
+        });
+        if (composed) {
+          composedResult = typeof composed === 'string'
+            ? { content: composed, model_route: null, fallback: null }
+            : composed;
+        }
+      } catch {
+        // Keep the graph-produced draft answer if provider composition is unavailable.
+      }
+    }
+    const finalText = redactText(composedResult.content ?? graphResult.result?.answer ?? '');
+    append({
+      event_type: 'delta',
+      payload: { text: finalText },
+    });
+    runState.status = 'completed';
+    runState.current_step_id = null;
+    runState.completed_steps = plan.steps.length;
+    runState.output = {
+      final_text: finalText,
+      model_route: composedResult.model_route ?? graphResult.draft?.model_route ?? null,
+      fallback: composedResult.fallback ?? graphResult.draft?.fallback ?? null,
+      executor_backend: graphResult.executor_backend ?? null,
+      orchestrator_mode: orchestratorMode,
+    };
+    runState.step_results.push({
+      step_id: 'graph_orchestrator',
+      status: 'completed',
+      summary: 'Graph orchestrator completed',
+      output: {
+        executor_backend: graphResult.executor_backend ?? null,
+        quality_gate: graphResult.quality_gate ?? null,
+        retrieval: graphResult.retrieval_result?.filter_policy ?? null,
+      },
+    });
+    append({
+      event_type: 'done',
+      payload: { final_message_id: `out_${message.message_id}`, finish_reason: 'completed' },
+      is_terminal: true,
+    });
+    emitTaskUpdate('completed', 'Task completed through graph orchestrator', {
+      orchestrator_mode: orchestratorMode,
+      executor_backend: graphResult.executor_backend ?? null,
+    });
+    return { runState, events };
+  }
+
+  try {
+    append({
+      event_type: 'start',
+      payload: { title: resumeState ? 'Resuming request' : 'Processing request', mode: 'assistant' },
+    });
+    emitTaskUpdate('start', resumeState ? 'Task resume started' : 'Processing request started');
 
     append({
       event_type: 'status',
-      payload: { state: 'planning', message: 'Plan created from the inbound request' },
+      payload: { state: resumeState ? 'resuming' : 'planning', message: resumeState ? 'Resuming task from the latest recoverable checkpoint' : 'Plan created from the inbound request' },
     });
-    emitTaskUpdate('planning', 'Plan created from the inbound request');
+    emitTaskUpdate(resumeState ? 'resuming' : 'planning', resumeState ? 'Resuming task from the latest recoverable checkpoint' : 'Plan created from the inbound request');
 
     append({
       event_type: 'delta',
@@ -112,47 +267,37 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
     });
 
     runState.status = 'running';
-    emitTaskUpdate('running', 'Execution started');
+    emitTaskUpdate('running', resumeState ? 'Execution resumed' : 'Execution started');
 
     let retrievalResult = null;
-    for (const step of plan.steps) {
+    for (const step of plan.steps.slice(startStepIndex)) {
       runState.current_step_id = step.step_id;
       emitTaskUpdate('step_start', `Starting step: ${step.title}`, {
         step_id: step.step_id,
         step_title: step.title,
       });
+      const stepDirective = prepareRuntimeStep({
+        message,
+        persona,
+        plan,
+        step,
+        runState,
+        approvalContext,
+      });
 
       append({
         event_type: 'status',
         step_id: step.step_id,
-        payload: { state: step.kind, message: `Running step: ${step.title}` },
+        payload: { state: step.kind, message: stepDirective.status_message },
       });
 
       if (step.kind === 'tool') {
-        const callId = `call_${step.step_id}`;
-        const request = {
-          call_id: callId,
-          tool_name: step.tool_name,
-          trace_id: runState.trace_id,
-          caller: {
-            task_id: runState.task_id,
-            step_id: step.step_id,
-            persona_id: persona.persona_id,
-          },
-          arguments: {
-            query: message.content.find((part) => part.type === 'text')?.text ?? plan.goal,
-            persona_id: persona.persona_id,
-          },
-        };
+        const request = stepDirective.tool_request;
 
         append({
           event_type: 'tool_call',
           step_id: step.step_id,
-          payload: {
-            tool_name: step.tool_name,
-            call_id: callId,
-            summary: step.objective,
-          },
+          payload: stepDirective.tool_call_payload,
         });
 
         retrievalResult = worker
@@ -165,6 +310,9 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
             persona_id: persona.persona_id,
             metadata: { tool_name: step.tool_name },
             payload: { request },
+            retry_limit: 2,
+            dead_letter_on_failure: true,
+            dead_letter_reason: 'worker_tool_failed',
           })
           : await toolRegistry.invoke(request);
 
@@ -173,11 +321,51 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
           step_id: step.step_id,
           payload: {
             call_id: retrievalResult.call_id,
+            tool_name: step.tool_name,
             status: retrievalResult.status,
             summary: retrievalResult.summary,
+            error_code: retrievalResult.error_code ?? null,
           },
           usage: retrievalResult.metrics,
         });
+
+        if (retrievalResult.status !== 'success' && retrievalResult.error_code === 'approval_required') {
+          runState.step_results.push({
+            step_id: step.step_id,
+            status: 'waiting_approval',
+            summary: retrievalResult.summary,
+            output: {
+              approval_required: true,
+              tool_name: step.tool_name,
+              call_id: retrievalResult.call_id,
+            },
+            error: {
+              code: retrievalResult.error_code,
+              message: retrievalResult.summary ?? 'Tool execution requires approval',
+            },
+          });
+          runState.status = 'waiting_approval';
+          append({
+            event_type: 'status',
+            step_id: step.step_id,
+            payload: {
+              state: 'waiting_approval',
+              message: `Awaiting human approval for ${step.title}`,
+            },
+            metadata: {
+              tool_name: step.tool_name,
+              call_id: retrievalResult.call_id,
+            },
+          });
+          emitTaskUpdate('waiting_approval', `Awaiting human approval for ${step.title}`, {
+            step_id: step.step_id,
+            step_title: step.title,
+            tool_name: step.tool_name,
+            approval_required: true,
+            call_id: retrievalResult.call_id,
+          });
+          break;
+        }
 
         const toolStepStatus = retrievalResult.status === 'success' ? 'completed' : 'failed';
         runState.step_results.push({
@@ -200,12 +388,12 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
       } else if (step.kind === 'respond') {
         const memorySnapshot = memoryStore?.buildContext({
           taskId: runState.task_id,
-          query: message.content.find((part) => part.type === 'text')?.text ?? plan.goal,
+          query: stepDirective.memory_query,
           limit: 4,
         }) ?? null;
 
-        const finalText = worker
-          ? (await worker.dispatch({
+        const composeResult = worker
+          ? await worker.dispatch({
             job_type: 'response.compose',
             trace_id: runState.trace_id,
             task_id: runState.task_id,
@@ -214,8 +402,32 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
             persona_id: persona.persona_id,
             metadata: { persona_name: persona.name },
             payload: { persona, message, plan, retrievalResult, memorySnapshot },
-          })).content
+            retry_limit: 2,
+            dead_letter_on_failure: true,
+            dead_letter_reason: 'worker_compose_failed',
+          })
           : await responseComposer.compose({ persona, message, plan, retrievalResult, memorySnapshot });
+        const normalizedCompose = typeof composeResult === 'string'
+          ? { content: composeResult, model_route: null, fallback: null }
+          : composeResult;
+        const rawFinalText = normalizedCompose.content ?? '';
+        const finalText = redactText(rawFinalText);
+        if (normalizedCompose.model_route) {
+          append({
+            event_type: 'status',
+            step_id: step.step_id,
+            payload: {
+              state: 'model_routed',
+              provider: normalizedCompose.model_route.provider,
+              model: normalizedCompose.model_route.model,
+              profile: normalizedCompose.model_route.profile,
+              fallback_applied: normalizedCompose.fallback?.applied ?? false,
+            },
+            metadata: {
+              reasoning_effort: normalizedCompose.model_route.reasoning_effort ?? null,
+            },
+          });
+        }
         append({
           event_type: 'delta',
           step_id: step.step_id,
@@ -224,6 +436,8 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
 
         runState.output = {
           final_text: finalText,
+          model_route: normalizedCompose.model_route ?? null,
+          fallback: normalizedCompose.fallback ?? null,
         };
         runState.step_results.push({
           step_id: step.step_id,
@@ -233,15 +447,25 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
         });
         emitTaskUpdate('response', 'Final response composed', {
           step_id: step.step_id,
+          model_provider: normalizedCompose.model_route?.provider ?? null,
+          model_name: normalizedCompose.model_route?.model ?? null,
+          model_profile: normalizedCompose.model_route?.profile ?? null,
+          model_reasoning_effort: normalizedCompose.model_route?.reasoning_effort ?? null,
+          model_fallback_applied: normalizedCompose.fallback?.applied ?? false,
+          model_fallback_reason: normalizedCompose.fallback?.reason ?? null,
         });
       } else {
+        const reasonResult = stepDirective.reason_result ?? {
+          summary: step.objective,
+          output: { note: 'reasoning step complete' },
+        };
         runState.step_results.push({
           step_id: step.step_id,
           status: 'completed',
-          summary: step.objective,
-          output: { note: 'reasoning step complete' },
+          summary: reasonResult.summary,
+          output: reasonResult.output,
         });
-        emitTaskUpdate('reasoning', step.objective, {
+        emitTaskUpdate('reasoning', reasonResult.summary, {
           step_id: step.step_id,
         });
       }
@@ -250,6 +474,16 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
       emitTaskUpdate('step_completed', `Completed step: ${step.title}`, {
         step_id: step.step_id,
       });
+    }
+
+    if (runState.status === 'waiting_approval') {
+      return {
+        runState,
+        events,
+        paused: true,
+        pause_reason: 'approval_required',
+        pause_step_id: runState.current_step_id,
+      };
     }
 
     runState.current_step_id = null;
@@ -266,4 +500,11 @@ export async function runAgentTask({ message, persona, plan, toolRegistry, store
   } finally {
     detachWorkerBridge();
   }
+}
+
+export async function resumeAgentTask(input) {
+  return runAgentTask({
+    ...input,
+    resumeState: input.resumeState ?? input.runState ?? null,
+  });
 }

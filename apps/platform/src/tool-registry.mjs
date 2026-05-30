@@ -3,6 +3,9 @@ import {
   createToolCallResult,
   createToolDefinition,
 } from '../../../packages/contracts/src/index.mjs';
+import { callPythonCore } from './python-core-bridge.mjs';
+import { createRestrictedExecutionEnvironment } from './restricted-exec.mjs';
+import { buildToolPolicy, evaluateToolAttempt } from './tool-policy.mjs';
 import { createWikiStore } from './wiki-store.mjs';
 import { createHybridRetrievalRouter } from './retrieval-router.mjs';
 
@@ -12,34 +15,6 @@ function clone(value) {
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function normalizeRetryPolicy(definition) {
-  const explicit = definition.retry_policy ?? {};
-  const retryableByDefault = definition.idempotent && (definition.risk_level === 'low' || definition.risk_level === 'medium');
-
-  return {
-    max_attempts: Number.isFinite(explicit.max_attempts) ? Math.max(1, explicit.max_attempts) : (retryableByDefault ? 2 : 1),
-    backoff_ms: Number.isFinite(explicit.backoff_ms) ? Math.max(0, explicit.backoff_ms) : 0,
-    retry_on: Array.isArray(explicit.retry_on) && explicit.retry_on.length > 0 ? explicit.retry_on.slice() : ['error', 'timeout'],
-  };
-}
-
-function shouldRetry({ status, attempt, policy }) {
-  return attempt < policy.max_attempts && policy.retry_on.includes(status);
-}
-
-function createPolicyMetrics(definition, policy, attempt, extra = {}) {
-  return {
-    timeout_ms: definition.timeout_ms,
-    attempt_count: attempt,
-    retry_count: Math.max(0, attempt - 1),
-    risk_level: definition.risk_level,
-    idempotent: definition.idempotent,
-    policy_max_attempts: policy.max_attempts,
-    policy_retry_on: policy.retry_on.slice(),
-    ...extra,
-  };
 }
 
 async function withTimeout(operation, timeoutMs) {
@@ -63,7 +38,9 @@ async function withTimeout(operation, timeoutMs) {
   });
 }
 
-export function createToolRegistry() {
+export function createToolRegistry({
+  executionEnvironment = createRestrictedExecutionEnvironment(),
+} = {}) {
   const tools = new Map();
   const idempotentCache = new Map();
   const inFlight = new Map();
@@ -82,44 +59,124 @@ export function createToolRegistry() {
     return entry;
   }
 
-  function buildIdempotencyKey(request) {
-    return `${request.tool_name}:${request.call_id}:${JSON.stringify(request.arguments)}`;
+function buildIdempotencyKey(request) {
+  return `${request.tool_name}:${request.call_id}:${JSON.stringify(request.arguments)}`;
+}
+
+function evaluateToolAccess({ definition, request }) {
+  if (definition.enabled === false) {
+    return {
+      allowed: false,
+      reason: 'tool_disabled',
+      summary: `Tool ${definition.tool_name} is disabled in the active registry`,
+      missing_permissions: [],
+      missing_capabilities: [],
+      policy: request.access_policy ?? null,
+    };
   }
 
-  async function executeWithPolicy({ request, definition, handler }) {
-    const policy = normalizeRetryPolicy(definition);
-    let attempt = 0;
-    let lastFailure = null;
+  const accessPolicy = request.access_policy;
+  if (!accessPolicy) {
+    return {
+      allowed: true,
+      reason: 'no_access_policy',
+      summary: 'No tool access policy attached to the request',
+      missing_permissions: [],
+      missing_capabilities: [],
+      policy: null,
+    };
+  }
+
+  return callPythonCore(
+    'evaluate_tool_access',
+    { definition, request },
+    { caller: 'apps/platform/src/tool-registry.mjs' },
+  );
+}
+
+async function executeWithPolicy({ request, definition, handler }) {
+  const accessDecision = evaluateToolAccess({ definition, request });
+  if (!accessDecision.allowed) {
+    return createToolCallResult({
+      call_id: request.call_id,
+      status: 'error',
+      error_code: accessDecision.reason,
+      summary: accessDecision.summary,
+      result: {},
+      evidence: [],
+      metrics: {
+        blocked: true,
+        access_policy_applied: true,
+        toolset_id: accessDecision.policy?.toolset_id ?? null,
+        missing_permissions: accessDecision.missing_permissions ?? [],
+        missing_capabilities: accessDecision.missing_capabilities ?? [],
+        risk_level: definition.risk_level,
+        idempotent: Boolean(definition.idempotent),
+        attempt_count: 0,
+        retry_count: 0,
+      },
+    });
+  }
+
+  const policy = buildToolPolicy(definition);
+  let attempt = 0;
+  let lastFailure = null;
 
     while (attempt < policy.max_attempts) {
       attempt += 1;
       try {
-        const rawResult = await withTimeout(() => handler(request, {
+        const rawResult = await withTimeout(() => executionEnvironment.execute({
           definition,
-          attempt,
-          retry_policy: policy,
+          request,
+          handler,
+          context: {
+            definition,
+            attempt,
+            retry_policy: policy,
+            approved: Boolean(request.approval?.approved),
+            approval_id: request.approval?.approval_id ?? null,
+            access_policy: request.access_policy ?? null,
+          },
         }), definition.timeout_ms);
         const result = createToolCallResult({
           call_id: request.call_id,
           ...rawResult,
         });
+        const evaluation = evaluateToolAttempt({
+          definition,
+          policy,
+          attempt,
+          status: result.status,
+          extra: {
+            error_code: result.error_code ?? null,
+            ...result.metrics,
+            cache_hit: false,
+            execution_environment: executionEnvironment.name,
+          },
+        });
         const finalResult = {
           ...result,
-          metrics: {
-            ...result.metrics,
-            ...createPolicyMetrics(definition, policy, attempt, {
-              cache_hit: false,
-            }),
-          },
+          metrics: evaluation.metrics,
         };
 
-        if (!shouldRetry({ status: finalResult.status, attempt, policy })) {
+        if (!evaluation.should_retry) {
           return finalResult;
         }
 
         lastFailure = finalResult;
       } catch (error) {
         const failureStatus = error?.name === 'ToolTimeoutError' ? 'timeout' : 'error';
+        const evaluation = evaluateToolAttempt({
+          definition,
+          policy,
+          attempt,
+          status: failureStatus,
+          extra: {
+            error_code: failureStatus === 'timeout' ? 'tool_timeout' : 'tool_execution_error',
+            cache_hit: false,
+            execution_environment: executionEnvironment.name,
+          },
+        });
         const failure = createToolCallResult({
           call_id: request.call_id,
           status: failureStatus,
@@ -127,12 +184,10 @@ export function createToolRegistry() {
           summary: error instanceof Error ? error.message : 'Tool execution failed',
           result: {},
           evidence: [],
-          metrics: createPolicyMetrics(definition, policy, attempt, {
-            cache_hit: false,
-          }),
+          metrics: evaluation.metrics,
         });
 
-        if (!shouldRetry({ status: failure.status, attempt, policy })) {
+        if (!evaluation.should_retry) {
           return failure;
         }
 
@@ -207,6 +262,58 @@ export function createToolRegistry() {
 }
 
 export function registerDefaultTools(registry, { wikiStore = createWikiStore() } = {}) {
+  registry.register(
+    {
+      tool_name: 'approval_sensitive_tool',
+      description: 'Simulate a high-risk action that requires human approval',
+      permissions: ['write_state'],
+      input_schema: {
+        type: 'object',
+        required: ['query'],
+        properties: {
+          query: { type: 'string' },
+          persona_id: { type: 'string' },
+        },
+      },
+      output_schema: {
+        type: 'object',
+        properties: {
+          approved_action: { type: 'string' },
+        },
+      },
+      risk_level: 'high',
+      timeout_ms: 5_000,
+      retry_policy: {
+        max_attempts: 1,
+        retry_on: ['timeout'],
+      },
+      idempotent: false,
+      side_effect_scope: 'external_state',
+      requires_approval: true,
+      enabled: true,
+      release_channel: 'stable',
+      capabilities: ['operations'],
+    },
+    async (request) => {
+      const query = String(request.arguments.query ?? '');
+
+      return {
+        status: 'success',
+        summary: 'Human approval granted and risky action recorded',
+        result: {
+          approved_action: `approved:${query.slice(0, 60)}`,
+        },
+        evidence: [
+          {
+            approval_source: 'human_review',
+            step_id: request.caller.step_id ?? null,
+          },
+        ],
+        metrics: { latency_ms: 4 },
+      };
+    },
+  );
+
   const searchStableDocs = ({ query, personaId }) => {
     const normalizedQuery = String(query ?? '').toLowerCase();
     return [
@@ -217,6 +324,15 @@ export function registerDefaultTools(registry, { wikiStore = createWikiStore() }
         score: normalizedQuery.includes('plan') ? 0.96 : 0.88,
         source_type: 'rag',
         freshness: 'stable',
+        doc_type: 'architecture',
+        project: 'platform',
+        tags: ['architecture', 'planning', 'agent-platform'],
+        authority: 'high',
+        owner: 'docs_team',
+        required_context: ['document_scope', 'persona_scope'],
+        retrieval_hints: ['architecture overview', 'planning loop', 'platform design'],
+        version: 'v1',
+        source_of_truth: 'platform_docs',
       },
       {
         doc_id: 'doc_delivery_loop',
@@ -225,6 +341,15 @@ export function registerDefaultTools(registry, { wikiStore = createWikiStore() }
         score: normalizedQuery.includes('review') ? 0.91 : 0.84,
         source_type: 'rag',
         freshness: 'stable',
+        doc_type: 'process',
+        project: 'delivery',
+        tags: ['delivery', 'workflow', 'verification'],
+        authority: 'high',
+        owner: 'delivery_ops',
+        required_context: ['workflow_scope'],
+        retrieval_hints: ['delivery loop', 'verification', 'execution workflow'],
+        version: 'v1',
+        source_of_truth: 'delivery_docs',
       },
     ];
   };
@@ -259,6 +384,9 @@ export function registerDefaultTools(registry, { wikiStore = createWikiStore() }
       idempotent: true,
       side_effect_scope: 'none',
       requires_approval: false,
+      enabled: true,
+      release_channel: 'stable',
+      capabilities: ['retrieval', 'docs_lookup'],
     },
     async (request) => {
       const query = String(request.arguments.query ?? '');
@@ -302,6 +430,9 @@ export function registerDefaultTools(registry, { wikiStore = createWikiStore() }
       idempotent: true,
       side_effect_scope: 'none',
       requires_approval: false,
+      enabled: true,
+      release_channel: 'stable',
+      capabilities: ['retrieval', 'wiki_lookup'],
     },
     async (request) => {
       const query = String(request.arguments.query ?? '');
@@ -346,6 +477,9 @@ export function registerDefaultTools(registry, { wikiStore = createWikiStore() }
       idempotent: true,
       side_effect_scope: 'none',
       requires_approval: false,
+      enabled: true,
+      release_channel: 'stable',
+      capabilities: ['retrieval'],
     },
     async (request) => {
       const query = String(request.arguments.query ?? '');
@@ -354,10 +488,17 @@ export function registerDefaultTools(registry, { wikiStore = createWikiStore() }
 
       return {
         status: 'success',
-        summary: `Retrieved ${result.items.length} sources via ${result.route.mode}`,
+        summary: `Retrieved ${result.items.length} sources via ${result.route.mode} (score ${result.quality.retrieval_score})`,
         result,
-        evidence: result.citations,
-        metrics: { latency_ms: 16 },
+        evidence: result.citations.map((citation) => ({
+          ...citation,
+          citation_score: citation.score,
+        })),
+        metrics: {
+          latency_ms: 16,
+          retrieval_score: result.quality.retrieval_score,
+          citation_score: result.quality.citation_score,
+        },
       };
     },
   );

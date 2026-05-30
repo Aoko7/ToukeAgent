@@ -14,6 +14,7 @@ function createDefaultTask(taskId) {
     persona_id: null,
     plan_id: null,
     message: null,
+    message_snapshot: null,
     plan: null,
     run_state: null,
     current_step_id: null,
@@ -60,6 +61,7 @@ export function createTaskStore() {
     };
 
     if (patch.message !== undefined) next.message = patch.message === null ? null : clone(patch.message);
+    if (patch.message_snapshot !== undefined) next.message_snapshot = patch.message_snapshot === null ? null : clone(patch.message_snapshot);
     if (patch.plan !== undefined) next.plan = patch.plan === null ? null : clone(patch.plan);
     if (patch.run_state !== undefined) next.run_state = patch.run_state === null ? null : clone(patch.run_state);
     if (patch.output !== undefined) next.output = patch.output === null ? null : clone(patch.output);

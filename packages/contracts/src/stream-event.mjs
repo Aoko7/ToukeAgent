@@ -32,8 +32,10 @@ function normalizePayload(eventType, payload) {
     case 'tool_result':
       return {
         call_id: asString(data.call_id, 'payload.call_id'),
+        tool_name: asOptionalString(data.tool_name, 'payload.tool_name'),
         status: asString(data.status ?? 'success', 'payload.status'),
         summary: asOptionalString(data.summary, 'payload.summary'),
+        error_code: asOptionalString(data.error_code, 'payload.error_code'),
       };
     case 'status':
       return {

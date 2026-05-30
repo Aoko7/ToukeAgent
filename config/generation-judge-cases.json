@@ -1,0 +1,980 @@
+{
+  "cases": [
+    {
+      "case_id": "rag_mage_grounded_pass",
+      "payload": {
+        "message": {
+          "message_id": "msg_generation_1",
+          "trace_id": "trace_generation_1",
+          "content": [
+            {
+              "type": "text",
+              "text": "How does MAGE detect machine-generated text in the wild?"
+            }
+          ]
+        },
+        "persona": {
+          "persona_id": "researcher"
+        },
+        "plan": {
+          "plan_id": "plan_generation_1"
+        },
+        "runState": {
+          "task_id": "trace_generation_1",
+          "trace_id": "trace_generation_1",
+          "persona_id": "researcher",
+          "total_steps": 3,
+          "completed_steps": 3,
+          "output": {
+            "final_text": "MAGE builds a comprehensive testbed for machine-generated text detection in the wild. It shows that perplexity is a fundamental signal for distinguishing machine-generated text from human-written text. Citation: MAGE: Machine-generated Text Detection in the Wild."
+          },
+          "step_results": [
+            {
+              "step_id": "step_retrieval",
+              "output": {
+                "route": {
+                  "mode": "rag-first",
+                  "effective_mode": "rag-first",
+                  "fallback_applied": false
+                },
+                "citations": [
+                  {
+                    "title": "MAGE: Machine-generated Text Detection in the Wild",
+                    "source_type": "rag",
+                    "score": 0.96
+                  }
+                ],
+                "items": [
+                  {
+                    "source_type": "rag",
+                    "summary": "MAGE proposes a comprehensive testbed for machine-generated text detection and studies how perplexity separates human-written from machine-generated text."
+                  }
+                ],
+                "supporting_chunks": [
+                  {
+                    "snippet": "We proposed a comprehensive testbed for machine-generated text detection by gathering texts from various writing tasks and model generations."
+                  },
+                  {
+                    "snippet": "We find that perplexity can serve as a fundamental feature for classification regardless of text domain or generation LLM."
+                  }
+                ],
+                "quality": {
+                  "retrieval_score": 0.94,
+                  "citation_score": 0.95,
+                  "route_alignment_score": 0.93,
+                  "recommended_action": "accept"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "reference": {
+        "query": "How does MAGE detect machine-generated text in the wild?",
+        "reference_points": [
+          "MAGE builds a comprehensive testbed for machine-generated text detection.",
+          "Perplexity is a fundamental signal for distinguishing machine-generated text from human-written text."
+        ],
+        "required_citations": [
+          "MAGE: Machine-generated Text Detection in the Wild"
+        ],
+        "expected_behavior": "answer",
+        "expected_decision": "pass",
+        "expected_route_mode": "rag-first",
+        "expected_effective_mode": "rag-first"
+      },
+      "metadata": {
+        "domain": "rag",
+        "route_family": "rag-first",
+        "topic": "llm-detection",
+        "language": "en",
+        "expected_bucket": "pass",
+        "tags": ["paper-rag", "grounded-pass"]
+      }
+    },
+    {
+      "case_id": "rag_mage_hallucination_fail",
+      "payload": {
+        "message": {
+          "message_id": "msg_generation_2",
+          "trace_id": "trace_generation_2",
+          "content": [
+            {
+              "type": "text",
+              "text": "How does MAGE detect machine-generated text in the wild?"
+            }
+          ]
+        },
+        "persona": {
+          "persona_id": "researcher"
+        },
+        "plan": {
+          "plan_id": "plan_generation_2"
+        },
+        "runState": {
+          "task_id": "trace_generation_2",
+          "trace_id": "trace_generation_2",
+          "persona_id": "researcher",
+          "total_steps": 3,
+          "completed_steps": 2,
+          "output": {
+            "final_text": "MAGE proves GPT-5 can perfectly detect every AI text without domain shift, and the paper reports 100 percent robustness."
+          },
+          "step_results": [
+            {
+              "step_id": "step_retrieval",
+              "output": {
+                "route": {
+                  "mode": "rag-first",
+                  "effective_mode": "rag-first",
+                  "fallback_applied": false
+                },
+                "citations": [],
+                "items": [
+                  {
+                    "source_type": "rag",
+                    "summary": "The paper studies the challenge of machine-generated text detection under distribution shifts."
+                  }
+                ],
+                "supporting_chunks": [
+                  {
+                    "snippet": "Empirical results demonstrate the challenge of AI-generated text detection, especially under out-of-distribution settings."
+                  }
+                ],
+                "quality": {
+                  "retrieval_score": 0.42,
+                  "citation_score": 0.28,
+                  "route_alignment_score": 0.72,
+                  "recommended_action": "supplement_retrieval"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "reference": {
+        "query": "How does MAGE detect machine-generated text in the wild?",
+        "reference_points": [
+          "MAGE builds a comprehensive testbed for machine-generated text detection.",
+          "Perplexity is a fundamental signal for distinguishing machine-generated text from human-written text."
+        ],
+        "required_citations": [
+          "MAGE: Machine-generated Text Detection in the Wild"
+        ],
+        "expected_behavior": "answer",
+        "expected_decision": "fail",
+        "expected_route_mode": "rag-first",
+        "expected_effective_mode": "rag-first"
+      },
+      "metadata": {
+        "domain": "rag",
+        "route_family": "rag-first",
+        "topic": "llm-detection",
+        "language": "en",
+        "expected_bucket": "fail",
+        "tags": ["paper-rag", "hallucination"]
+      }
+    },
+    {
+      "case_id": "wiki_first_dynamic_pass",
+      "payload": {
+        "message": {
+          "message_id": "msg_generation_3",
+          "trace_id": "trace_generation_3",
+          "content": [
+            {
+              "type": "text",
+              "text": "请告诉我最新版本和价格状态。"
+            }
+          ]
+        },
+        "persona": {
+          "persona_id": "researcher"
+        },
+        "plan": {
+          "plan_id": "plan_generation_3"
+        },
+        "runState": {
+          "task_id": "trace_generation_3",
+          "trace_id": "trace_generation_3",
+          "persona_id": "researcher",
+          "total_steps": 3,
+          "completed_steps": 3,
+          "output": {
+            "final_text": "这类最新版本和价格状态问题应该优先走 wiki-first。当前命中的 DeepSeek provider profile 明确说明，价格、版本和发布元数据属于动态事实，应以当前 wiki 状态为准。"
+          },
+          "step_results": [
+            {
+              "step_id": "step_retrieval",
+              "output": {
+                "route": {
+                  "mode": "wiki-first",
+                  "effective_mode": "wiki-first",
+                  "fallback_applied": false
+                },
+                "citations": [
+                  {
+                    "title": "DeepSeek provider profile",
+                    "source_type": "wiki",
+                    "score": 0.97
+                  }
+                ],
+                "items": [
+                  {
+                    "source_type": "wiki",
+                    "summary": "DeepSeek provider 的价格、版本和发布元数据属于动态事实。",
+                    "facts": [
+                      "价格、版本和发布元数据属于动态事实。",
+                      "当请求涉及版本、价格或当前 provider 状态时，优先走 wiki-first。"
+                    ]
+                  }
+                ],
+                "quality": {
+                  "retrieval_score": 0.95,
+                  "citation_score": 0.95,
+                  "route_alignment_score": 0.96,
+                  "recommended_action": "accept"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "reference": {
+        "query": "请告诉我最新版本和价格状态。",
+        "reference_points": [
+          "价格、版本和发布元数据属于动态事实。",
+          "当请求涉及版本、价格或当前 provider 状态时，优先走 wiki-first。"
+        ],
+        "required_citations": [
+          "DeepSeek provider profile"
+        ],
+        "expected_behavior": "answer",
+        "expected_decision": "pass",
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first"
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "provider-freshness",
+        "language": "zh",
+        "expected_bucket": "pass",
+        "tags": ["dynamic-facts", "direct-wiki"]
+      }
+    },
+    {
+      "case_id": "wiki_first_fallback_review",
+      "payload": {
+        "message": {
+          "message_id": "msg_generation_4",
+          "trace_id": "trace_generation_4",
+          "content": [
+            {
+              "type": "text",
+              "text": "请告诉我最新版本和价格状态。"
+            }
+          ]
+        },
+        "persona": {
+          "persona_id": "researcher"
+        },
+        "plan": {
+          "plan_id": "plan_generation_4"
+        },
+        "runState": {
+          "task_id": "trace_generation_4",
+          "trace_id": "trace_generation_4",
+          "persona_id": "researcher",
+          "total_steps": 3,
+          "completed_steps": 3,
+          "output": {
+            "final_text": "这类最新版本和价格状态问题本来应该走 wiki-first，但这次动态 wiki 没命中，所以系统显式 fallback 到 rag-first。价格和版本仍需要补查最新 wiki。"
+          },
+          "step_results": [
+            {
+              "step_id": "step_retrieval",
+              "output": {
+                "route": {
+                  "mode": "wiki-first",
+                  "effective_mode": "rag-first",
+                  "fallback_applied": true
+                },
+                "citations": [
+                  {
+                    "title": "Delivery workflow status model",
+                    "source_type": "rag",
+                    "score": 0.78
+                  }
+                ],
+                "items": [
+                  {
+                    "source_type": "rag",
+                    "summary": "动态 wiki 没命中时，系统需要显式 fallback 到 rag-first 的稳定资料。"
+                  }
+                ],
+                "quality": {
+                  "retrieval_score": 0.69,
+                  "citation_score": 0.7,
+                  "route_alignment_score": 0.88,
+                  "recommended_action": "supplement_wiki"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "reference": {
+        "query": "请告诉我最新版本和价格状态。",
+        "reference_points": [
+          "动态 wiki 没命中时，系统需要显式 fallback 到 rag-first。",
+          "价格和版本仍需要补查最新 wiki。"
+        ],
+        "required_citations": [
+          "Delivery workflow status model"
+        ],
+        "expected_behavior": "answer",
+        "expected_decision": "review",
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "rag-first"
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "provider-freshness",
+        "language": "zh",
+        "expected_bucket": "review",
+        "tags": ["dynamic-facts", "fallback"]
+      }
+    },
+    {
+      "case_id": "rag_qst_memory_pass",
+      "payload": {
+        "message": {
+          "message_id": "msg_generation_5",
+          "trace_id": "trace_generation_5",
+          "content": [
+            {
+              "type": "text",
+              "text": "How does QST reduce memory overhead when fine-tuning quantized LLMs?"
+            }
+          ]
+        },
+        "persona": {
+          "persona_id": "researcher"
+        },
+        "plan": {
+          "plan_id": "plan_generation_5"
+        },
+        "runState": {
+          "task_id": "trace_generation_5",
+          "trace_id": "trace_generation_5",
+          "persona_id": "researcher",
+          "total_steps": 3,
+          "completed_steps": 3,
+          "output": {
+            "final_text": "QST first quantizes the base LLM into 4-bit and then uses a side network with low-rank adaptors or downsample modules, so it reduces full-memory training overhead. The paper reports up to 2.3x lower total memory footprint and up to 3x faster fine-tuning. Citation: Quantized Side Tuning: Fast and Memory-Efficient Tuning of Quantized Large Language Models."
+          },
+          "step_results": [
+            {
+              "step_id": "step_retrieval",
+              "output": {
+                "route": {
+                  "mode": "rag-first",
+                  "effective_mode": "rag-first",
+                  "fallback_applied": false
+                },
+                "citations": [
+                  {
+                    "title": "Quantized Side Tuning: Fast and Memory-Efficient Tuning of Quantized Large Language Models",
+                    "source_type": "rag",
+                    "score": 0.95
+                  }
+                ],
+                "items": [
+                  {
+                    "source_type": "rag",
+                    "summary": "QST quantizes the base model into 4-bit and introduces a side network with lightweight adapters to reduce memory usage during finetuning."
+                  }
+                ],
+                "supporting_chunks": [
+                  {
+                    "snippet": "QST leverages a 4-bit data type to store an LLM’s model weights and uses several low-rank adapter methods to reduce the required trainable parameters and the memory footprint."
+                  },
+                  {
+                    "snippet": "Experiment results show that QST can reduce the total memory footprint by up to 2.3× and speed up the finetuning process by up to 3× while achieving competent performance."
+                  }
+                ],
+                "quality": {
+                  "retrieval_score": 0.93,
+                  "citation_score": 0.94,
+                  "route_alignment_score": 0.92,
+                  "recommended_action": "accept"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "reference": {
+        "query": "How does QST reduce memory overhead when fine-tuning quantized LLMs?",
+        "reference_points": [
+          "QST quantizes the base model into 4-bit and uses a side network with lightweight adapters or downsample modules.",
+          "QST reduces total memory footprint by up to 2.3x and speeds up finetuning by up to 3x."
+        ],
+        "required_citations": [
+          "Quantized Side Tuning: Fast and Memory-Efficient Tuning of Quantized Large Language Models"
+        ],
+        "expected_behavior": "answer",
+        "expected_decision": "pass",
+        "expected_route_mode": "rag-first",
+        "expected_effective_mode": "rag-first"
+      },
+      "metadata": {
+        "domain": "rag",
+        "route_family": "rag-first",
+        "topic": "model-efficiency",
+        "language": "en",
+        "expected_bucket": "pass",
+        "tags": ["paper-rag", "efficiency"]
+      }
+    },
+    {
+      "case_id": "rag_privlm_tradeoff_review",
+      "payload": {
+        "message": {
+          "message_id": "msg_generation_6",
+          "trace_id": "trace_generation_6",
+          "content": [
+            {
+              "type": "text",
+              "text": "How does PrivLM-Bench evaluate privacy in language models?"
+            }
+          ]
+        },
+        "persona": {
+          "persona_id": "researcher"
+        },
+        "plan": {
+          "plan_id": "plan_generation_6"
+        },
+        "runState": {
+          "task_id": "trace_generation_6",
+          "trace_id": "trace_generation_6",
+          "persona_id": "researcher",
+          "total_steps": 3,
+          "completed_steps": 3,
+          "output": {
+            "final_text": "PrivLM-Bench focuses on the privacy-utility trade-off for privately protected language models and evaluates them with data extraction and membership inference attacks."
+          },
+          "step_results": [
+            {
+              "step_id": "step_retrieval",
+              "output": {
+                "route": {
+                  "mode": "rag-first",
+                  "effective_mode": "rag-first",
+                  "fallback_applied": false
+                },
+                "citations": [],
+                "items": [
+                  {
+                    "source_type": "rag",
+                    "summary": "PrivLM-Bench fairly quantifies the privacy-utility trade-off for privately protected language models."
+                  },
+                  {
+                    "source_type": "rag",
+                    "summary": "The benchmark studies privacy attacks and experimental DP settings."
+                  }
+                ],
+                "supporting_chunks": [
+                  {
+                    "snippet": "PrivLM-Bench proposes to fairly quantify PPLMs’ privacy-utility trade-off and incorporates multifaceted privacy attacks, including the data extraction attack and membership inference attack."
+                  },
+                  {
+                    "snippet": "During our experiments, we strictly bound delta and epsilon for differential privacy tuning."
+                  }
+                ],
+                "quality": {
+                  "retrieval_score": 0.72,
+                  "citation_score": 0.55,
+                  "route_alignment_score": 0.84,
+                  "recommended_action": "supplement_retrieval"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "reference": {
+        "query": "How does PrivLM-Bench evaluate privacy in language models?",
+        "reference_points": [
+          "PrivLM-Bench quantifies the privacy-utility trade-off for privately protected language models.",
+          "PrivLM-Bench evaluates data extraction and membership inference attacks.",
+          "PrivLM-Bench also includes embedding-level privacy attacks."
+        ],
+        "required_citations": [
+          "PrivLM-Bench: A Multi-level Privacy Evaluation Benchmark for Language Models"
+        ],
+        "expected_behavior": "answer",
+        "expected_decision": "review",
+        "expected_route_mode": "rag-first",
+        "expected_effective_mode": "rag-first"
+      },
+      "metadata": {
+        "domain": "rag",
+        "route_family": "rag-first",
+        "topic": "privacy-eval",
+        "language": "en",
+        "expected_bucket": "review",
+        "tags": ["paper-rag", "review-needed"]
+      }
+    },
+    {
+      "case_id": "rag_tableqa_pipeline_pass",
+      "payload": {
+        "message": {
+          "message_id": "msg_generation_7",
+          "trace_id": "trace_generation_7",
+          "content": [
+            {
+              "type": "text",
+              "text": "How does the low-resource Indic TableQA paper address data scarcity?"
+            }
+          ]
+        },
+        "persona": {
+          "persona_id": "researcher"
+        },
+        "plan": {
+          "plan_id": "plan_generation_7"
+        },
+        "runState": {
+          "task_id": "trace_generation_7",
+          "trace_id": "trace_generation_7",
+          "persona_id": "researcher",
+          "total_steps": 3,
+          "completed_steps": 3,
+          "output": {
+            "final_text": "The paper addresses low-resource table QA data scarcity by building a fully automatic large-scale data generation pipeline and then applying automatic quality control to filter invalid or low-quality questions. Citation: Table Question Answering for Low-resourced Indic Languages."
+          },
+          "step_results": [
+            {
+              "step_id": "step_retrieval",
+              "output": {
+                "route": {
+                  "mode": "rag-first",
+                  "effective_mode": "rag-first",
+                  "fallback_applied": false
+                },
+                "citations": [
+                  {
+                    "title": "Table Question Answering for Low-resourced Indic Languages",
+                    "source_type": "rag",
+                    "score": 0.94
+                  }
+                ],
+                "items": [
+                  {
+                    "source_type": "rag",
+                    "summary": "The paper proposes an automatic large-scale data generation process for low-resource table QA and adds quality control for synthetic questions."
+                  }
+                ],
+                "supporting_chunks": [
+                  {
+                    "snippet": "We explore low-resource tableQA by designing a low-cost and large-scale automatic data generation and quality estimation pipeline."
+                  },
+                  {
+                    "snippet": "We employ automatic quality control steps to ensure quality of the synthetic tableQA data and discard invalid or erroneous queries and samples."
+                  }
+                ],
+                "quality": {
+                  "retrieval_score": 0.91,
+                  "citation_score": 0.93,
+                  "route_alignment_score": 0.9,
+                  "recommended_action": "accept"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "reference": {
+        "query": "How does the low-resource Indic TableQA paper address data scarcity?",
+        "reference_points": [
+          "The paper designs a low-cost and large-scale automatic data generation pipeline for low-resource table QA.",
+          "The paper applies automatic quality control to filter invalid or low-quality synthetic samples."
+        ],
+        "required_citations": [
+          "Table Question Answering for Low-resourced Indic Languages"
+        ],
+        "expected_behavior": "answer",
+        "expected_decision": "pass",
+        "expected_route_mode": "rag-first",
+        "expected_effective_mode": "rag-first"
+      },
+      "metadata": {
+        "domain": "rag",
+        "route_family": "rag-first",
+        "topic": "tableqa-low-resource",
+        "language": "en",
+        "expected_bucket": "pass",
+        "tags": ["paper-rag", "multilingual"]
+      }
+    },
+    {
+      "case_id": "rag_fizz_method_fail",
+      "payload": {
+        "message": {
+          "message_id": "msg_generation_8",
+          "trace_id": "trace_generation_8",
+          "content": [
+            {
+              "type": "text",
+              "text": "How does FIZZ detect factual inconsistency in summarization?"
+            }
+          ]
+        },
+        "persona": {
+          "persona_id": "researcher"
+        },
+        "plan": {
+          "plan_id": "plan_generation_8"
+        },
+        "runState": {
+          "task_id": "trace_generation_8",
+          "trace_id": "trace_generation_8",
+          "persona_id": "researcher",
+          "total_steps": 3,
+          "completed_steps": 2,
+          "output": {
+            "final_text": "FIZZ mainly relies on ROUGE-style overlap and does not decompose summaries into atomic facts or compare them against the document."
+          },
+          "step_results": [
+            {
+              "step_id": "step_retrieval",
+              "output": {
+                "route": {
+                  "mode": "rag-first",
+                  "effective_mode": "rag-first",
+                  "fallback_applied": false
+                },
+                "citations": [],
+                "items": [
+                  {
+                    "source_type": "rag",
+                    "summary": "The paper motivates factual inconsistency detection for summarization."
+                  }
+                ],
+                "supporting_chunks": [
+                  {
+                    "snippet": "Summarization systems often hallucinate and generate summaries that are factually inconsistent with the source article."
+                  }
+                ],
+                "quality": {
+                  "retrieval_score": 0.38,
+                  "citation_score": 0.25,
+                  "route_alignment_score": 0.74,
+                  "recommended_action": "supplement_retrieval"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "reference": {
+        "query": "How does FIZZ detect factual inconsistency in summarization?",
+        "reference_points": [
+          "FIZZ decomposes the summary into atomic facts.",
+          "FIZZ compares atomic facts against the source document with sentence-wise scoring and granularity expansion.",
+          "FIZZ reports strong results on the AGGREFACT benchmark."
+        ],
+        "required_citations": [
+          "FIZZ: Factual Inconsistency Detection by Zoom-in Summary and Zoom-out Document"
+        ],
+        "expected_behavior": "answer",
+        "expected_decision": "fail",
+        "expected_route_mode": "rag-first",
+        "expected_effective_mode": "rag-first"
+      },
+      "metadata": {
+        "domain": "rag",
+        "route_family": "rag-first",
+        "topic": "summarization-eval",
+        "language": "en",
+        "expected_bucket": "fail",
+        "tags": ["paper-rag", "hallucination"]
+      }
+    },
+    {
+      "case_id": "wiki_first_clarify_pass",
+      "payload": {
+        "message": {
+          "message_id": "msg_generation_9",
+          "trace_id": "trace_generation_9",
+          "content": [
+            {
+              "type": "text",
+              "text": "这个现在是什么版本？"
+            }
+          ]
+        },
+        "persona": {
+          "persona_id": "researcher"
+        },
+        "plan": {
+          "plan_id": "plan_generation_9"
+        },
+        "runState": {
+          "task_id": "trace_generation_9",
+          "trace_id": "trace_generation_9",
+          "persona_id": "researcher",
+          "total_steps": 3,
+          "completed_steps": 3,
+          "output": {
+            "final_text": "请补充你指的是哪个产品、模型或 provider。当前 query 缺少明确主体；如果你是在问 DeepSeek，我会优先查询 DeepSeek provider profile 里的最新版本状态。"
+          },
+          "step_results": [
+            {
+              "step_id": "step_retrieval",
+              "output": {
+                "route": {
+                  "mode": "wiki-first",
+                  "effective_mode": "wiki-first",
+                  "fallback_applied": false
+                },
+                "citations": [
+                  {
+                    "title": "DeepSeek provider profile",
+                    "source_type": "wiki",
+                    "score": 0.95
+                  }
+                ],
+                "items": [
+                  {
+                    "source_type": "wiki",
+                    "summary": "当请求涉及版本状态但缺少明确主体时，应先澄清具体 provider 或模型。",
+                    "facts": [
+                      "当请求涉及版本状态但缺少明确主体时，应先澄清具体 provider 或模型。",
+                      "在主体明确后，应优先查询对应 provider profile 的动态版本条目。"
+                    ]
+                  }
+                ],
+                "quality": {
+                  "retrieval_score": 0.93,
+                  "citation_score": 0.92,
+                  "route_alignment_score": 0.95,
+                  "recommended_action": "clarify"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "reference": {
+        "query": "这个现在是什么版本？",
+        "reference_points": [
+          "当请求涉及版本状态但缺少明确主体时，应先澄清具体 provider 或模型。",
+          "在主体明确后，应优先查询对应 provider profile 的动态版本条目。"
+        ],
+        "required_citations": [
+          "DeepSeek provider profile"
+        ],
+        "expected_behavior": "clarify",
+        "expected_decision": "pass",
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first"
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "provider-freshness",
+        "language": "zh",
+        "expected_bucket": "pass",
+        "tags": ["dynamic-facts", "clarify"]
+      }
+    },
+    {
+      "case_id": "wiki_first_abstain_pass",
+      "payload": {
+        "message": {
+          "message_id": "msg_generation_10",
+          "trace_id": "trace_generation_10",
+          "content": [
+            {
+              "type": "text",
+              "text": "请告诉我 OpenAI 企业版现在的最新定价。"
+            }
+          ]
+        },
+        "persona": {
+          "persona_id": "researcher"
+        },
+        "plan": {
+          "plan_id": "plan_generation_10"
+        },
+        "runState": {
+          "task_id": "trace_generation_10",
+          "trace_id": "trace_generation_10",
+          "persona_id": "researcher",
+          "total_steps": 3,
+          "completed_steps": 3,
+          "output": {
+            "final_text": "我无法根据当前资料确认 OpenAI 企业版现在的最新定价。现有 wiki 条目标记为过期，需要刷新对应 provider wiki 或人工复核后再给出结论。"
+          },
+          "step_results": [
+            {
+              "step_id": "step_retrieval",
+              "output": {
+                "route": {
+                  "mode": "wiki-first",
+                  "effective_mode": "wiki-first",
+                  "fallback_applied": false
+                },
+                "citations": [
+                  {
+                    "title": "OpenAI enterprise pricing profile",
+                    "source_type": "wiki",
+                    "score": 0.9
+                  }
+                ],
+                "items": [
+                  {
+                    "source_type": "wiki",
+                    "summary": "当 provider pricing 条目缺少新鲜刷新时间或被标记为过期时，不应输出当前定价结论。",
+                    "facts": [
+                      "当 provider pricing 条目被标记为过期时，不应输出当前定价结论。",
+                      "此时应请求刷新 wiki 或转人工复核。"
+                    ]
+                  }
+                ],
+                "quality": {
+                  "retrieval_score": 0.91,
+                  "citation_score": 0.9,
+                  "route_alignment_score": 0.94,
+                  "recommended_action": "human_review"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "reference": {
+        "query": "请告诉我 OpenAI 企业版现在的最新定价。",
+        "reference_points": [
+          "当 provider pricing 条目被标记为过期时，不应输出当前定价结论。",
+          "此时应请求刷新 wiki 或转人工复核。"
+        ],
+        "required_citations": [
+          "OpenAI enterprise pricing profile"
+        ],
+        "expected_behavior": "abstain",
+        "expected_decision": "pass",
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first"
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "provider-freshness",
+        "language": "zh",
+        "expected_bucket": "pass",
+        "tags": ["dynamic-facts", "abstain"]
+      }
+    },
+    {
+      "case_id": "wiki_project_source_conflict_abstain_pass",
+      "payload": {
+        "message": {
+          "message_id": "msg_generation_11",
+          "trace_id": "trace_generation_11",
+          "content": [
+            {
+              "type": "text",
+              "text": "当前主线模型选择状态是什么？"
+            }
+          ]
+        },
+        "persona": {
+          "persona_id": "researcher"
+        },
+        "plan": {
+          "plan_id": "plan_generation_11"
+        },
+        "runState": {
+          "task_id": "trace_generation_11",
+          "trace_id": "trace_generation_11",
+          "persona_id": "researcher",
+          "total_steps": 3,
+          "completed_steps": 3,
+          "output": {
+            "final_text": "当前主线模型选择状态还不能直接确认。两条动态状态页对当前主线模型选择给出了冲突结论：一条指向 transmacro_full，另一条指向 nomhsa，所以不应直接输出当前主线结论，应该先补充 RAG 证据或人工复核后再确认。引用：Project model selection status。"
+          },
+          "step_results": [
+            {
+              "step_id": "step_retrieval",
+              "output": {
+                "route": {
+                  "mode": "wiki-first",
+                  "effective_mode": "wiki-first",
+                  "fallback_applied": false
+                },
+                "citations": [
+                  {
+                    "title": "Project model selection status",
+                    "source_type": "wiki",
+                    "score": 0.93
+                  },
+                  {
+                    "title": "Project model selection shadow",
+                    "source_type": "wiki",
+                    "score": 0.87
+                  }
+                ],
+                "items": [
+                  {
+                    "source_type": "wiki",
+                    "summary": "当前主线模型选择状态存在 source-of-truth conflict，不应直接输出当前主线结论。",
+                    "facts": [
+                      "当前主线模型选择状态存在冲突，不应直接输出当前主线结论。",
+                      "此时应先补充 RAG 证据或人工复核后再确认。",
+                      "Project model selection status 指向 transmacro_full，而 Project model selection shadow 指向 nomhsa。"
+                    ]
+                  }
+                ],
+                "quality": {
+                  "retrieval_score": 0.78,
+                  "citation_score": 0.92,
+                  "route_alignment_score": 0.95,
+                  "recommended_action": "supplement_rag"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "reference": {
+        "query": "当前主线模型选择状态是什么？",
+        "reference_points": [
+          "当前主线模型选择状态存在冲突，不应直接输出当前主线结论。",
+          "此时应先补充 RAG 证据或人工复核后再确认。"
+        ],
+        "required_citations": [
+          "Project model selection status"
+        ],
+        "expected_behavior": "abstain",
+        "expected_decision": "pass",
+        "expected_route_mode": "wiki-first",
+        "expected_effective_mode": "wiki-first"
+      },
+      "metadata": {
+        "domain": "wiki",
+        "route_family": "wiki-first",
+        "topic": "project_source_conflict",
+        "language": "zh",
+        "expected_bucket": "pass",
+        "tags": ["project-conflict", "source-of-truth", "guardrail", "abstain"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "cases": [
+    {
+      "case_id": "quantized_side_tuning",
+      "query": "side tuning for quantized llms with lower memory overhead",
+      "expected_title": "Quantized Side Tuning: Fast and Memory-Efficient Tuning of Quantized Large Language Models",
+      "manifest_path": "data/papers/manifests/acl-2024-offset0-limit20.jsonl",
+      "tags": ["acl", "llm", "quantization", "finetuning"]
+    },
+    {
+      "case_id": "mage_deepfake_text",
+      "query": "how does MAGE detect machine-generated deepfake text in the wild and explain ppl cue",
+      "expected_title": "MAGE: Machine-generated Text Detection in the Wild",
+      "manifest_path": "data/papers/manifests/acl-2024-offset0-limit20.jsonl",
+      "tags": ["acl", "llm", "detection"]
+    },
+    {
+      "case_id": "privlm_privacy_benchmark",
+      "query": "privacy benchmark that evaluates language models at multiple attack levels",
+      "expected_title": "PrivLM-Bench: A Multi-level Privacy Evaluation Benchmark for Language Models",
+      "manifest_path": "data/papers/manifests/acl-2024-offset0-limit20.jsonl",
+      "tags": ["acl", "privacy", "benchmark", "llm"]
+    },
+    {
+      "case_id": "gentranslate_multilingual_speech",
+      "query": "generative llm approach for multilingual speech and machine translation",
+      "expected_title": "GenTranslate: Large Language Models are Generative Multilingual Speech and Machine Translators",
+      "manifest_path": "data/papers/manifests/acl-2024-offset0-limit20.jsonl",
+      "tags": ["acl", "speech", "translation", "llm"]
+    },
+    {
+      "case_id": "evil_twin_prompts",
+      "query": "unintelligible prompts that still trigger similar model behavior",
+      "expected_title": "Prompts have evil twins",
+      "manifest_path": "data/papers/manifests/emnlp-2024-offset0-limit20.jsonl",
+      "tags": ["emnlp", "prompting", "robustness"]
+    },
+    {
+      "case_id": "fizz_consistency",
+      "query": "factual inconsistency detection with zoom-in summary and zoom-out document",
+      "expected_title": "FIZZ: Factual Inconsistency Detection by Zoom-in Summary and Zoom-out Document",
+      "manifest_path": "data/papers/manifests/emnlp-2024-offset0-limit20.jsonl",
+      "tags": ["emnlp", "summarization", "evaluation"]
+    },
+    {
+      "case_id": "tableqa_indic_languages",
+      "query": "table question answering for low-resource indic languages",
+      "expected_title": "Table Question Answering for Low-resourced Indic Languages",
+      "manifest_path": "data/papers/manifests/emnlp-2024-offset0-limit20.jsonl",
+      "tags": ["emnlp", "tableqa", "multilingual"]
+    },
+    {
+      "case_id": "fido2_local_attacks",
+      "query": "local attacker analysis against fido2 passkeys and usability tradeoffs",
+      "expected_title": "A Security and Usability Analysis of Local Attacks Against FIDO2",
+      "manifest_path": "data/papers/manifests/ndss-2024.jsonl",
+      "tags": ["ndss", "authentication", "fido2"]
+    },
+    {
+      "case_id": "machine_unlearning_services",
+      "query": "vulnerabilities in machine unlearning services and assurance claims",
+      "expected_title": "A Duty to Forget, a Right to be Assured? Exposing Vulnerabilities in Machine Unlearning Services",
+      "manifest_path": "data/papers/manifests/ndss-2024.jsonl",
+      "tags": ["ndss", "ml-security", "unlearning"]
+    },
+    {
+      "case_id": "android_update_support",
+      "query": "device-centric study of android security update support fragmentation",
+      "expected_title": "50 Shades of Support: A Device-Centric Analysis of Android Security Updates",
+      "manifest_path": "data/papers/manifests/ndss-2024.jsonl",
+      "tags": ["ndss", "android", "measurement"]
+    },
+    {
+      "case_id": "oran_layer3_detection",
+      "query": "o-ran compliant layer-3 cellular attack detection service",
+      "expected_title": "5G-Spector: An O-RAN Compliant Layer-3 Cellular Attack Detection Service",
+      "manifest_path": "data/papers/manifests/ndss-2024.jsonl",
+      "tags": ["ndss", "cellular", "oran", "detection"]
+    },
+    {
+      "case_id": "wireguard_symbolic_analysis",
+      "query": "unified symbolic analysis of the wireguard protocol",
+      "expected_title": "A Unified Symbolic Analysis of WireGuard",
+      "manifest_path": "data/papers/manifests/ndss-2024.jsonl",
+      "tags": ["ndss", "wireguard", "formal-analysis"]
+    },
+    {
+      "case_id": "pakistani_creators_safety",
+      "query": "digital threats and security practices of Pakistani content creators",
+      "expected_title": "\"I chose to fight, be brave, and to deal with it\": Threat Experiences and Security Practices of Pakistani Content Creators",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "tags": ["usenix_security", "safety", "creators"]
+    },
+    {
+      "case_id": "onlyfans_creator_threats",
+      "query": "digital threat model and safety practices of onlyfans creators",
+      "expected_title": "\"I feel physically safe but not politically safe\": Understanding the Digital Threats and Safety Practices of {OnlyFans} Creators",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "tags": ["usenix_security", "safety", "onlyfans"]
+    },
+    {
+      "case_id": "reddit_mod_admin_abuse",
+      "query": "moderation power dynamics and feature misuse in combating hate on reddit",
+      "expected_title": "Investigating Moderation Challenges to Combating Hate and Harassment: The Case of {Mod-Admin} Power Dynamics and Feature Misuse on Reddit",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "tags": ["usenix_security", "reddit", "moderation"]
+    },
+    {
+      "case_id": "attackgnn_red_team",
+      "query": "reinforcement learning red teaming of graph neural networks for hardware security",
+      "expected_title": "{AttackGNN}: {Red-Teaming} {GNNs} in Hardware Security Using Reinforcement Learning",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "tags": ["usenix_security", "hardware-security", "reinforcement-learning"]
+    },
+    {
+      "case_id": "spy_camera_em_radiation",
+      "query": "long-range hidden spy camera detection using electromagnetic radiation signatures",
+      "expected_title": "Eye of Sauron: {Long-Range} Hidden Spy Camera Detection and Positioning with Inbuilt Memory {EM} Radiation",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "tags": ["usenix_security", "privacy", "hardware", "detection"]
+    },
+    {
+      "case_id": "image_based_abuse_protection",
+      "query": "proactive protection against image-based sexual abuse in digital intimacy",
+      "expected_title": "\"Did They {F***ing} Consent to That?\": Safer Digital Intimacy via Proactive Protection Against {Image-Based} Sexual Abuse",
+      "manifest_path": "data/papers/manifests/usenix_security-2024-offset0-limit50.jsonl",
+      "tags": ["usenix_security", "safety", "image-abuse"]
+    }
+  ]
+}
