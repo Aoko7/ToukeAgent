@@ -135,24 +135,6 @@ This is deliberately more process than demo. Agents fail quietly when evidence i
 - The frontend console is functional and inspectable, but the project is more about agent platform mechanics than pixel-perfect product polish.
 - Some provider behavior depends on local configuration and available model credentials.
 
-## Safety Notes Before Publishing
-
-Before making a fork public, check that these stay untracked:
-
-```text
-.env
-.env.*
-config/*.local.json
-data/runtime/
-data/models/
-data/qdrant/
-data/papers/raw/
-LLM wiki/
-resume/
-```
-
-The public story should be code, contracts, docs, sample cards, and reproducible checks. Private notes can remain private. They have done enough unpaid labor already.
-
 ## Reading Order
 
 If you are reviewing the project quickly:

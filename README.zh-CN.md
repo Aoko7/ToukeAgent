@@ -137,24 +137,6 @@ ToukeAgent 把知识拆成三类：
 - 前端控制台以可检查、可解释为主，不追求产品级视觉打磨。
 - 部分 provider 行为依赖本地配置和可用模型凭据。
 
-## 公开仓库前的安全边界
-
-开源前请确认这些内容保持未跟踪：
-
-```text
-.env
-.env.*
-config/*.local.json
-data/runtime/
-data/models/
-data/qdrant/
-data/papers/raw/
-LLM wiki/
-resume/
-```
-
-公开版本应该展示代码、契约、文档、样例卡片和可复现检查。私有笔记可以继续私有，它们已经打过很多工了。
-
 ## 推荐阅读顺序
 
 如果你想快速了解项目：
